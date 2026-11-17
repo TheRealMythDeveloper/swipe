@@ -26,3 +26,60 @@ body {
     text-align: center;
     gap: 15px;
 }
+.logo {
+    font-size: 76px;
+    font-weight: 900;
+    letter-spacing: 12px;
+
+    color: #ffffff;
+
+    text-shadow: 0 0 25px rgba(84, 214, 232, 0.25);
+}
+
+.subtitle {
+    font-size: 12px;
+    letter-spacing: 4px;
+    color: #9296a5;
+}
+.menu-buttons {
+    display: flex;
+    flex-direction: column;
+
+    gap: 12px;
+    margin-top: 30px;
+
+    width: 240px;
+}
+
+.menu-buttons button {
+    padding: 16px;
+
+    border: 1px solid #54d6e8;
+    border-radius: 6px;
+
+    background: transparent;
+    color: #54d6e8;
+
+    font-size: 14px;
+    font-weight: bold;
+    letter-spacing: 3px;
+
+    cursor: pointer;
+
+    transition: 0.2s;
+}
+
+.menu-buttons button:hover {
+    background: #54d6e8;
+    color: #101116;
+
+    box-shadow: 0 0 20px rgba(84, 214, 232, 0.3);
+}
+.footer-text {
+    margin-top: 55px;
+
+    font-size: 11px;
+    letter-spacing: 3px;
+
+    color: #656978;
+}
