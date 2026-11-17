@@ -346,7 +346,7 @@ try {
 
 updateHUD();
 startTimer();
-
+}
 
 
 function startTimer() {
