@@ -1,97 +1,582 @@
-const mainMenu = document.getElementById("main-menu");
-const gameScreen = document.getElementById("game-screen");
 
-const campaignButton = document.getElementById("campaign-button");
-const endlessButton = document.getElementById("endless-button");
-const backButton = document.getElementById("back-button");
 
-const gameModeTitle = document.getElementById("game-mode-title");
-let currentMode = "CAMPAIGN";
-let currentLevel = 1;
-let currentChallenge = 1;
-let score = 0;
-let timeLeft = 10;
+const screens = {
+    menu: document.getElementById("main-menu"),
+    levels: document.getElementById("level-screen"),
+    game: document.getElementById("game-screen"),
+    pause: document.getElementById("pause-screen"),
+    results: document.getElementById("results-screen"),
+    gameOver: document.getElementById("game-over-screen")
+};
 
-const challenges = [
-    {
-        name: "SLICE",
-        instruction: "Swipe through the target!",
-    },
-    {
-        name: "DIRECTION",
-        instruction: "Follow the indicated direction!",
-    },
-    {
-        name: "TRACE",
-        instruction: "Follow the path!",
-    },
-    {
-        name: "STOP",
-        instruction: "Stop inside the target zone!",
-    },
-    {
-        name: "DEFLECT",
-        instruction: "Redirect the object!",
-    }
+const elements = {
+    campaignButton: document.getElementById("campaign-button"),
+    endlessButton: document.getElementById("endless-button"),
+
+    selectedMode: document.getElementById("selected-mode"),
+    levelList: document.getElementById("level-list"),
+    startLevelButton: document.getElementById("start-level-button"),
+
+    modeLabel: document.getElementById("mode-label"),
+    levelLabel: document.getElementById("level-label"),
+    scoreLabel: document.getElementById("score-label"),
+
+    challengeNumber: document.getElementById("challenge-number"),
+    challengeTitle: document.getElementById("challenge-title"),
+    challengeInstructions: document.getElementById("challenge-instructions"),
+
+    minigameContent: document.getElementById("minigame-content"),
+    feedback: document.getElementById("feedback-message"),
+
+    timer: document.getElementById("timer-label"),
+    progressBar: document.getElementById("progress-bar"),
+    progressLabel: document.getElementById("progress-label"),
+
+    pauseButton: document.getElementById("pause-button"),
+    resumeButton: document.getElementById("resume-button"),
+    restartButton: document.getElementById("restart-button"),
+    quitButton: document.getElementById("quit-button"),
+
+    finalScore: document.getElementById("final-score"),
+    completedCount: document.getElementById("completed-count"),
+    bestStreak: document.getElementById("best-streak"),
+
+    continueButton: document.getElementById("continue-button"),
+    retryButton: document.getElementById("retry-button"),
+    resultsMenuButton: document.getElementById("results-menu-button"),
+
+    gameOverScore: document.getElementById("game-over-score"),
+    gameOverRetry: document.getElementById("game-over-retry"),
+    gameOverMenu: document.getElementById("game-over-menu")
+};
+
+
+
+const CONFIG = {
+    challengesPerLevel: 5,
+    campaignLevels: 10,
+    startingTime: 15,
+    baseScore: 100
+    
+};
+
+
+/* =========================================
+   MINIGAME REGISTRY
+========================================= */
+
+// Each minigame will eventually register its
+// own setup, update, and cleanup functions.
+
+const MINIGAMES = [
+    { id: "slice", name: "SLICE", instruction: "Swipe through targets. Avoid hazards!" },
+    { id: "direction", name: "DIRECTION", instruction: "Swipe in the indicated direction." },
+    { id: "trace", name: "TRACE", instruction: "Follow the path without leaving it." },
+    { id: "stop", name: "STOP", instruction: "Stop inside the target zone." },
+    { id: "deflect", name: "DEFLECT", instruction: "Redirect objects toward the goal." },
+    { id: "sort", name: "SORT", instruction: "Move objects into matching zones." },
+    { id: "flick", name: "FLICK", instruction: "Flick the object toward its target." },
+    { id: "circle", name: "CIRCLE", instruction: "Draw a circle within the target." },
+    { id: "dodge", name: "DODGE", instruction: "Avoid the incoming objects." },
+    { id: "catch", name: "CATCH", instruction: "Catch the falling objects." },
+    { id: "tap", name: "TAP", instruction: "Hit targets in the correct sequence." },
+    { id: "memory", name: "MEMORY", instruction: "Remember and repeat the pattern." },
+    { id: "connect", name: "CONNECT", instruction: "Connect the matching points." },
+    { id: "balance", name: "BALANCE", instruction: "Keep the object inside the moving zone." },
+    { id: "react", name: "REACT", instruction: "React when the signal appears." },
+    { id: "precision", name: "PRECISION", instruction: "Hit the moving target." },
+    { id: "follow", name: "FOLLOW", instruction: "Keep tracking the moving object." },
+    { id: "combo", name: "COMBO", instruction: "Complete a rapid sequence of actions." }
 ];
-function startGame(mode) {
 
-    currentMode = mode;
-    currentLevel = 1;
-    currentChallenge = 1;
-    score = 0;
 
-    mainMenu.classList.add("hidden");
-    gameScreen.classList.remove("hidden");
 
-    document.getElementById("mode-label").textContent = mode;
 
-    loadChallenge();
+const state = {
+    mode: "CAMPAIGN",
 
+    level: 1,
+    challenge: 0,
+
+    score: 0,
+    levelScore: 0,
+
+    completed: 0,
+    streak: 0,
+    bestStreak: 0,
+
+    timeLeft: CONFIG.startingTime,
+
+    selectedLevel: 1,
+
+    running: false,
+    paused: false,
+
+    currentMinigame: null,
+    levelChallenges: [],
+
+    timerInterval: null
+};
+
+
+
+function showScreen(screenName) {
+
+    Object.values(screens).forEach(screen => {
+        screen.classList.add("hidden");
+        screen.classList.remove("active");
+    });
+
+    const selectedScreen = screens[screenName];
+
+    if (selectedScreen) {
+        selectedScreen.classList.remove("hidden");
+        selectedScreen.classList.add("active");
+    }
 }
-function loadChallenge() {
 
-    const challenge = challenges[currentChallenge - 1];
 
-    document.getElementById("challenge-title").textContent = challenge.name;
-    document.getElementById("challenge-instructions").textContent = challenge.instruction;
-
-    document.getElementById("level-label").textContent = "LEVEL " + currentLevel;
-    document.getElementById("score-label").textContent = "SCORE: " + score;
-    document.getElementById("progress-label").textContent =
-        "CHALLENGE " + currentChallenge + " / 5";
-
-}
 function returnToMenu() {
 
-    gameScreen.classList.add("hidden");
-    mainMenu.classList.remove("hidden");
+    stopTimer();
+    cleanupMinigame();
 
+    state.running = false;
+    state.paused = false;
+
+    showScreen("menu");
 }
-campaignButton.addEventListener("click", () => {
-    startGame("CAMPAIGN");
-});
 
-endlessButton.addEventListener("click", () => {
-    startGame("ENDLESS");
-});
 
-backButton.addEventListener("click", returnToMenu);
-function completeChallenge() {
 
-    score += 100;
+function openCampaign() {
 
-    if (currentChallenge < 5) {
+    state.mode = "CAMPAIGN";
 
-        currentChallenge++;
+    elements.selectedMode.textContent = "CAMPAIGN";
+    document.getElementById("level-screen-title").textContent =
+        "SELECT LEVEL";
 
-    } else {
+    generateLevelButtons();
 
-        currentLevel++;
-        currentChallenge = 1;
+    showScreen("levels");
+}
 
+
+function generateLevelButtons() {
+
+    elements.levelList.innerHTML = "";
+
+    for (let i = 1; i <= CONFIG.campaignLevels; i++) {
+
+        const button = document.createElement("button");
+
+        button.className = "level-button";
+        button.textContent = i;
+
+        if (i === state.selectedLevel) {
+            button.classList.add("selected");
+        }
+
+        button.addEventListener("click", () => {
+
+            state.selectedLevel = i;
+
+            document.querySelectorAll(".level-button").forEach(item => {
+                item.classList.remove("selected");
+            });
+
+            button.classList.add("selected");
+
+        });
+
+        elements.levelList.appendChild(button);
     }
+}
+
+
+
+function startCampaign() {
+
+    state.mode = "CAMPAIGN";
+    state.level = state.selectedLevel;
+
+    beginRun();
+}
+
+
+function startEndless() {
+
+    state.mode = "ENDLESS";
+    state.level = 1;
+
+    beginRun();
+}
+
+
+function beginRun() {
+
+    state.score = 0;
+    state.levelScore = 0;
+
+    state.completed = 0;
+    state.streak = 0;
+    state.bestStreak = 0;
+
+    state.challenge = 0;
+
+    generateLevelChallenges();
+
+    elements.modeLabel.textContent = state.mode;
+
+    showScreen("game");
+
+    updateHUD();
 
     loadChallenge();
-
 }
+
+
+
+
+function generateLevelChallenges() {
+
+    const shuffled = [...MINIGAMES];
+
+    // Shuffle the minigame list.
+    for (let i = shuffled.length - 1; i > 0; i--) {
+
+        const j = Math.floor(Math.random() * (i + 1));
+
+        [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+    }
+
+    state.levelChallenges = shuffled.slice(
+        0,
+        CONFIG.challengesPerLevel
+    );
+}
+
+
+/* =========================================
+   LOADING A MINIGAME
+========================================= */
+
+function loadChallenge() {
+
+    cleanupMinigame();
+    stopTimer();
+
+    const challenge = state.levelChallenges[state.challenge];
+
+    if (!challenge) return;
+
+    state.currentMinigame = challenge;
+    state.timeLeft = CONFIG.startingTime;
+
+    elements.challengeTitle.textContent = challenge.name;
+    elements.challengeInstructions.textContent = challenge.instruction;
+
+    elements.challengeNumber.textContent =
+        `CHALLENGE ${state.challenge + 1} / ${CONFIG.challengesPerLevel}`;
+
+    elements.timer.textContent = state.timeLeft;
+
+    elements.feedback.textContent = "GET READY";
+
+    elements.minigameContent.innerHTML = `
+        <div style="
+            width:100%;
+            height:100%;
+            display:flex;
+            align-items:center;
+            justify-content:center;
+            flex-direction:column;
+            gap:15px;
+            color:#54d6e8;
+            text-align:center;
+        ">
+            <h2>${challenge.name}</h2>
+            <p>MINIGAME MODULE NOT YET INSTALLED</p>
+        </div>
+    `;
+
+    state.running = true;
+    state.paused = false;
+
+    updateHUD();
+    startTimer();
+
+    // Future minigame initialization:
+    // MinigameModules[challenge.id].start();
+}
+
+
+
+
+function startTimer() {
+
+    stopTimer();
+
+    state.timerInterval = setInterval(() => {
+
+        if (!state.running || state.paused) return;
+
+        state.timeLeft--;
+
+        elements.timer.textContent = state.timeLeft;
+
+        if (state.timeLeft <= 0) {
+            failChallenge();
+        }
+
+    }, 1000);
+}
+
+
+function stopTimer() {
+
+    if (state.timerInterval !== null) {
+        clearInterval(state.timerInterval);
+        state.timerInterval = null;
+    }
+}
+
+
+
+function awardPoints(amount) {
+
+    if (!state.running || state.paused) return;
+
+    state.score += amount;
+    state.levelScore += amount;
+
+    updateHUD();
+}
+
+
+function completeChallenge() {
+
+    if (!state.running || state.paused) return;
+
+    state.completed++;
+    state.streak++;
+
+    state.bestStreak = Math.max(
+        state.bestStreak,
+        state.streak
+    );
+
+    awardPoints(CONFIG.baseScore);
+
+    elements.feedback.textContent = "COMPLETE!";
+
+    state.running = false;
+
+    stopTimer();
+    cleanupMinigame();
+
+    setTimeout(() => {
+
+        state.challenge++;
+
+        if (state.challenge >= CONFIG.challengesPerLevel) {
+            finishLevel();
+        } else {
+            loadChallenge();
+        }
+
+    }, 700);
+}
+
+
+function failChallenge() {
+
+    if (!state.running) return;
+
+    state.running = false;
+    state.streak = 0;
+
+    stopTimer();
+    cleanupMinigame();
+
+    elements.feedback.textContent = "FAILED";
+
+    setTimeout(() => {
+        showGameOver();
+    }, 700);
+}
+
+
+
+
+function finishLevel() {
+
+    stopTimer();
+
+    state.running = false;
+
+    if (state.mode === "CAMPAIGN" &&
+        state.level >= CONFIG.campaignLevels) {
+
+        showResults(true);
+        return;
+    }
+
+    showResults(false);
+}
+
+
+function nextLevel() {
+
+    state.level++;
+    state.challenge = 0;
+    state.levelScore = 0;
+
+    generateLevelChallenges();
+
+    showScreen("game");
+
+    updateHUD();
+    loadChallenge();
+}
+
+
+
+
+function showResults(campaignComplete) {
+
+    showScreen("results");
+
+    document.getElementById("results-title").textContent =
+        campaignComplete ? "CAMPAIGN COMPLETE" : "LEVEL COMPLETE";
+
+    elements.finalScore.textContent = state.score;
+
+    elements.completedCount.textContent =
+        `${state.completed} / ${CONFIG.challengesPerLevel}`;
+
+    elements.bestStreak.textContent = state.bestStreak;
+
+    elements.continueButton.textContent =
+        state.mode === "ENDLESS" ? "NEXT LEVEL" : "CONTINUE";
+
+    elements.continueButton.disabled = campaignComplete;
+}
+
+
+function showGameOver() {
+
+    showScreen("gameOver");
+
+    elements.gameOverScore.textContent = state.score;
+}
+
+
+
+
+function pauseGame() {
+
+    if (!state.running) return;
+
+    state.paused = true;
+
+    showScreen("pause");
+}
+
+
+function resumeGame() {
+
+    if (!state.paused) return;
+
+    state.paused = false;
+
+    showScreen("game");
+}
+
+
+function restartGame() {
+
+    stopTimer();
+    cleanupMinigame();
+
+    state.challenge = 0;
+    state.completed = 0;
+    state.streak = 0;
+
+    state.score = 0;
+    state.levelScore = 0;
+
+    generateLevelChallenges();
+
+    showScreen("game");
+
+    updateHUD();
+    loadChallenge();
+}
+
+
+
+
+function updateHUD() {
+
+    elements.modeLabel.textContent = state.mode;
+    elements.levelLabel.textContent = state.level;
+    elements.scoreLabel.textContent = state.score;
+
+    elements.progressLabel.textContent =
+        `${state.completed} / ${CONFIG.challengesPerLevel}`;
+
+    elements.progressBar.style.width =
+        `${(state.completed / CONFIG.challengesPerLevel) * 100}%`;
+}
+
+
+
+
+function cleanupMinigame() {
+
+    // Individual minigames will use this
+    // to remove listeners, animations and timers.
+
+    elements.minigameContent.innerHTML = "";
+}
+
+
+
+
+elements.campaignButton.addEventListener("click", openCampaign);
+
+elements.endlessButton.addEventListener("click", startEndless);
+
+elements.startLevelButton.addEventListener("click", startCampaign);
+
+document.querySelector('[data-back="menu"]').addEventListener(
+    "click",
+    returnToMenu
+);
+
+elements.pauseButton.addEventListener("click", pauseGame);
+
+elements.resumeButton.addEventListener("click", resumeGame);
+
+elements.restartButton.addEventListener("click", restartGame);
+
+elements.quitButton.addEventListener("click", returnToMenu);
+
+elements.continueButton.addEventListener("click", nextLevel);
+
+elements.retryButton.addEventListener("click", restartGame);
+
+elements.resultsMenuButton.addEventListener("click", returnToMenu);
+
+elements.gameOverRetry.addEventListener("click", restartGame);
+
+elements.gameOverMenu.addEventListener("click", returnToMenu);
+
+
+/* Initialization */
+showScreen("menu");
+
+console.log("SWIPE ENGINE INITIALIZED");
+console.log(`${MINIGAMES.length} minigames registered.`);
