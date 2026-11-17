@@ -113,7 +113,8 @@ const state = {
     paused: false,
 
     currentMinigame: null,
-    levelChallenges: [],
+currentModule: null,
+levelChallenges: [],
 
     timerInterval: null
 };
@@ -305,22 +306,25 @@ function loadChallenge() {
 
     elements.feedback.textContent = "GET READY";
 
-    elements.minigameContent.innerHTML = `
-        <div style="
-            width:100%;
-            height:100%;
-            display:flex;
-            align-items:center;
-            justify-content:center;
-            flex-direction:column;
-            gap:15px;
-            color:#54d6e8;
-            text-align:center;
-        ">
-            <h2>${challenge.name}</h2>
-            <p>MINIGAME MODULE NOT YET INSTALLED</p>
-        </div>
-    `;
+    const module = MinigameModules[challenge.id];
+
+if (!module) {
+    console.error(`Missing minigame module: ${challenge.id}`);
+    return;
+}
+
+state.currentModule = module;
+
+module.start(
+    elements.minigameContent,
+    (success = true) => {
+        if (success) {
+            completeChallenge();
+        }
+    },
+    state.level
+);
+
 
     state.running = true;
     state.paused = false;
@@ -334,42 +338,20 @@ function loadChallenge() {
 
 
 function startTimer() {
-
     stopTimer();
 
-    const startTime = Date.now();
-    const duration = CONFIG.startingTime * 1000;
-
     state.timerInterval = setInterval(() => {
-
         if (!state.running || state.paused) return;
 
-        const elapsed = Date.now() - startTime;
-        const remaining = Math.max(
-            0,
-            Math.ceil((duration - elapsed) / 1000)
-        );
+        state.timeLeft--;
+        elements.timer.textContent = state.timeLeft;
 
-        state.timeLeft = remaining;
-        elements.timer.textContent = remaining;
-
-        if (remaining <= 0) {
+        if (state.timeLeft <= 0) {
             failChallenge();
         }
-
-    }, 100);
-
+    }, 1000);
 }
 
-
-function stopTimer() {
-
-    if (state.timerInterval !== null) {
-        clearInterval(state.timerInterval);
-        state.timerInterval = null;
-    }
-
-}
 
 
 function stopTimer() {
@@ -574,13 +556,13 @@ function updateHUD() {
 
 
 function cleanupMinigame() {
-
-    // Individual minigames will use this
-    // to remove listeners, animations and timers.
+    if (state.currentModule) {
+        state.currentModule.cleanup();
+        state.currentModule = null;
+    }
 
     elements.minigameContent.innerHTML = "";
 }
-
 
 
 

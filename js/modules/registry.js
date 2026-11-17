@@ -1,0 +1,21 @@
+
+const MinigameModules = {
+    stop: Stop,
+    precision: Precision,
+    slice: Slice,
+    direction: Direction,
+    trace: Trace,
+    deflect: Deflect,
+    sort: Sort,
+    flick: Flick,
+    circle: Circle,
+    dodge: Dodge,
+    catch: Catch,
+    tap: Tap,
+    memory: Memory,
+    connect: Connect,
+    balance: Balance,
+    react: React,
+    follow: Follow,
+    combo: Combo
+};
