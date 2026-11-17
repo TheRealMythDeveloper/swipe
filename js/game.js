@@ -239,22 +239,43 @@ function beginRun() {
 
 
 
+let previousChallenges = [];
+
 function generateLevelChallenges() {
 
-    const shuffled = [...MINIGAMES];
+    let available = MINIGAMES.filter(game =>
+        !previousChallenges.includes(game.id)
+    );
 
-    // Shuffle the minigame list.
-    for (let i = shuffled.length - 1; i > 0; i--) {
+    // If too few remain, allow the full roster again.
+    if (available.length < CONFIG.challengesPerLevel) {
+        available = [...MINIGAMES];
+    }
+
+    // Shuffle.
+    for (let i = available.length - 1; i > 0; i--) {
 
         const j = Math.floor(Math.random() * (i + 1));
 
-        [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+        [available[i], available[j]] =
+        [available[j], available[i]];
+
     }
 
-    state.levelChallenges = shuffled.slice(
+    state.levelChallenges = available.slice(
         0,
         CONFIG.challengesPerLevel
     );
+
+    previousChallenges = state.levelChallenges.map(
+        game => game.id
+    );
+
+    console.log(
+        "Selected minigames:",
+        state.levelChallenges.map(game => game.name)
+    );
+
 }
 
 
@@ -312,25 +333,42 @@ function loadChallenge() {
 }
 
 
-
-
 function startTimer() {
 
     stopTimer();
+
+    const startTime = Date.now();
+    const duration = CONFIG.startingTime * 1000;
 
     state.timerInterval = setInterval(() => {
 
         if (!state.running || state.paused) return;
 
-        state.timeLeft--;
+        const elapsed = Date.now() - startTime;
+        const remaining = Math.max(
+            0,
+            Math.ceil((duration - elapsed) / 1000)
+        );
 
-        elements.timer.textContent = state.timeLeft;
+        state.timeLeft = remaining;
+        elements.timer.textContent = remaining;
 
-        if (state.timeLeft <= 0) {
+        if (remaining <= 0) {
             failChallenge();
         }
 
-    }, 1000);
+    }, 100);
+
+}
+
+
+function stopTimer() {
+
+    if (state.timerInterval !== null) {
+        clearInterval(state.timerInterval);
+        state.timerInterval = null;
+    }
+
 }
 
 
@@ -432,7 +470,8 @@ function nextLevel() {
     state.level++;
     state.challenge = 0;
     state.levelScore = 0;
-
+state.completed = 0;
+state.streak = 0;
     generateLevelChallenges();
 
     showScreen("game");
