@@ -1,8 +1,4 @@
 
-/* =========================================
-   SWIPE - GLOBAL FOUNDATION
-========================================= */
-
 * {
     margin: 0;
     padding: 0;
@@ -14,15 +10,12 @@
     --surface: #191b24;
     --surface-light: #222530;
     --border: #303340;
-
     --text: #f4f5fa;
     --muted: #9295a5;
-
     --accent: #45b9ff;
     --success: #35d9a0;
     --danger: #ff405c;
     --warning: #ffc857;
-
     --radius: 12px;
 }
 
@@ -30,9 +23,7 @@ body {
     min-height: 100vh;
     background: var(--background);
     color: var(--text);
-
     font-family: Arial, Helvetica, sans-serif;
-
     overflow-x: hidden;
 }
 
@@ -59,12 +50,10 @@ button:disabled {
 .screen {
     min-height: 100vh;
     width: 100%;
-
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
-
     padding: 30px;
 }
 
@@ -82,70 +71,103 @@ p {
     color: #101116;
 }
 
-/* =========================================
-   MAIN MENU
-========================================= */
-
 #main-menu {
     gap: 22px;
     text-align: center;
 }
 
-#main-menu h1 {
+.logo {
     font-size: clamp(64px, 12vw, 120px);
+    font-weight: 900;
     letter-spacing: 12px;
-
     color: var(--accent);
-
-    text-shadow:
-        0 0 15px #45b9ff55,
-        0 0 45px #45b9ff22;
 }
 
-#main-menu p {
+#main-menu .subtitle {
     color: var(--muted);
     letter-spacing: 4px;
     font-size: 13px;
     text-transform: uppercase;
 }
 
-#main-menu button {
+.menu-buttons {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+    margin-top: 12px;
+}
+
+#main-menu button,
+#pause-screen button,
+#results-screen button,
+#game-over-screen button {
     width: 240px;
     padding: 16px 24px;
-
     background: var(--surface);
     border: 1px solid var(--border);
     border-radius: var(--radius);
-
     font-size: 15px;
     font-weight: bold;
     letter-spacing: 2px;
-
-    transition:
-        background 0.2s,
-        border-color 0.2s,
-        transform 0.2s;
+    transition: background 0.2s, border-color 0.2s;
 }
 
-#main-menu button:hover {
+#main-menu button:hover,
+#pause-screen button:hover,
+#results-screen button:hover,
+#game-over-screen button:hover {
     background: var(--surface-light);
     border-color: var(--accent);
-    transform: translateY(-3px);
 }
 
+.menu-info {
+    display: flex;
+    gap: 24px;
+    color: var(--muted);
+    font-size: 11px;
+    letter-spacing: 2px;
+}
 
-/* =========================================
-   LEVEL SELECTION
-========================================= */
+.footer-text {
+    color: var(--muted);
+    font-size: 12px;
+    letter-spacing: 3px;
+}
 
 #level-screen {
     gap: 25px;
     text-align: center;
 }
 
+.screen-header {
+    width: 100%;
+    max-width: 900px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.back-button {
+    background: transparent;
+    color: var(--muted);
+    padding: 10px;
+}
+
+.back-button:hover {
+    color: var(--accent);
+}
+
 #level-screen h1,
 #level-screen h2 {
     color: var(--accent);
+}
+
+.screen-content {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 18px;
 }
 
 #level-list {
@@ -156,15 +178,11 @@ p {
 
 .level-button {
     aspect-ratio: 1;
-
     background: var(--surface);
     border: 1px solid var(--border);
     border-radius: var(--radius);
-
     font-size: 20px;
     font-weight: bold;
-
-    transition: 0.2s;
 }
 
 .level-button:hover {
@@ -176,59 +194,50 @@ p {
     background: var(--accent);
     color: var(--background);
     border-color: var(--accent);
-
-    box-shadow: 0 0 18px #45b9ff55;
 }
 
 #start-level-button {
     padding: 15px 35px;
-
     background: var(--accent);
     color: var(--background);
-
     border-radius: var(--radius);
-
     font-weight: bold;
     letter-spacing: 2px;
-
-    transition: 0.2s;
 }
 
 #start-level-button:hover {
-    box-shadow: 0 0 20px #45b9ff66;
-    transform: translateY(-2px);
+    background: #70caff;
 }
-
-/* =========================================
-   GAMEPLAY SCREEN
-========================================= */
 
 #game-screen {
     justify-content: flex-start;
     gap: 18px;
-
     max-width: 1100px;
     margin: 0 auto;
 }
 
-
-/* =========================================
-   GAME HUD
-========================================= */
-
-#game-screen .game-hud {
+.game-header {
     width: 100%;
-
     display: flex;
     justify-content: space-between;
     align-items: center;
     gap: 15px;
-
     padding: 16px 20px;
-
     background: var(--surface);
     border: 1px solid var(--border);
     border-radius: var(--radius);
+}
+
+.hud-item {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+}
+
+.hud-label {
+    color: var(--muted);
+    font-size: 10px;
+    letter-spacing: 2px;
 }
 
 #mode-label,
@@ -242,20 +251,33 @@ p {
     color: var(--success);
 }
 
+#pause-button {
+    padding: 9px 14px;
+    background: var(--surface-light);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    font-size: 18px;
+}
 
-/* =========================================
-   CHALLENGE HEADER
-========================================= */
+#pause-button:hover {
+    border-color: var(--accent);
+}
+
+.challenge-header {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    text-align: center;
+}
 
 #challenge-title {
     font-size: clamp(24px, 5vw, 36px);
     color: var(--accent);
-    text-align: center;
 }
 
 #challenge-instructions {
     color: var(--muted);
-    text-align: center;
     font-size: 14px;
 }
 
@@ -263,38 +285,22 @@ p {
     color: var(--muted);
     font-size: 12px;
     letter-spacing: 3px;
-    text-align: center;
 }
-
-
-/* =========================================
-   MINIGAME ARENA
-========================================= */
 
 #game-area {
     position: relative;
-
     width: 100%;
     max-width: 850px;
     height: 430px;
-
     overflow: hidden;
-
-    background:
-        radial-gradient(circle at center, #202431, #14161e 75%);
-
+    background: #191b24;
     border: 1px solid var(--border);
     border-radius: 16px;
-
-    box-shadow:
-        0 15px 50px #00000055,
-        inset 0 0 35px #00000033;
 }
 
 #minigame-container,
 #minigame-content {
     position: relative;
-
     width: 100%;
     height: 100%;
 }
@@ -305,25 +311,32 @@ p {
     user-select: none;
 }
 
-
-/* =========================================
-   FEEDBACK
-========================================= */
-
-#feedback-message {
+#game-feedback {
     min-height: 24px;
-
-    color: var(--success);
-    font-weight: bold;
-    letter-spacing: 3px;
-
     text-align: center;
 }
 
+#feedback-message {
+    color: var(--success);
+    font-weight: bold;
+    letter-spacing: 3px;
+}
 
-/* =========================================
-   TIMER AND PROGRESS
-========================================= */
+.game-footer {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    gap: 18px;
+}
+
+.timer-container {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    color: var(--muted);
+    font-size: 12px;
+    letter-spacing: 2px;
+}
 
 #timer-label {
     color: var(--warning);
@@ -332,13 +345,19 @@ p {
     font-variant-numeric: tabular-nums;
 }
 
-#progress-bar {
+.progress-container {
+    flex: 1;
     height: 8px;
-    width: 0%;
+    background: var(--surface-light);
+    border-radius: 20px;
+    overflow: hidden;
+}
 
+#progress-bar {
+    height: 100%;
+    width: 0%;
     background: var(--success);
     border-radius: 20px;
-
     transition: width 0.3s ease;
 }
 
@@ -347,11 +366,9 @@ p {
     font-size: 13px;
 }
 
-/* =========================================
-   PAUSE SCREEN
-========================================= */
-
-#pause-screen {
+#pause-screen,
+#results-screen,
+#game-over-screen {
     gap: 20px;
     text-align: center;
 }
@@ -359,36 +376,6 @@ p {
 #pause-screen h1 {
     color: var(--warning);
     font-size: 42px;
-}
-
-#pause-screen button {
-    width: 230px;
-    padding: 15px;
-
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: var(--radius);
-
-    font-weight: bold;
-    letter-spacing: 2px;
-
-    transition: 0.2s;
-}
-
-#pause-screen button:hover {
-    border-color: var(--accent);
-    background: var(--surface-light);
-    transform: translateY(-2px);
-}
-
-
-/* =========================================
-   RESULTS SCREEN
-========================================= */
-
-#results-screen {
-    gap: 20px;
-    text-align: center;
 }
 
 #results-screen h1 {
@@ -400,10 +387,35 @@ p {
     color: var(--muted);
 }
 
-#final-score {
+.results-score,
+.results-stats {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+#final-score,
+#game-over-score {
     color: var(--accent);
     font-size: 42px;
     font-weight: bold;
+}
+
+.results-stats {
+    flex-direction: row;
+    gap: 35px;
+}
+
+.results-stats div {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.results-stats span {
+    color: var(--muted);
+    font-size: 11px;
+    letter-spacing: 2px;
 }
 
 #completed-count,
@@ -412,75 +424,16 @@ p {
     font-weight: bold;
 }
 
-#results-screen button {
-    width: 230px;
-    padding: 15px;
-
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: var(--radius);
-
-    font-weight: bold;
-    letter-spacing: 2px;
-
-    transition: 0.2s;
-}
-
-#results-screen button:hover {
-    border-color: var(--success);
-    background: var(--surface-light);
-    transform: translateY(-2px);
-}
-
-
-/* =========================================
-   GAME OVER SCREEN
-========================================= */
-
-#game-over-screen {
-    gap: 20px;
-    text-align: center;
-}
-
 #game-over-screen h1 {
     color: var(--danger);
     font-size: clamp(40px, 8vw, 65px);
-
-    text-shadow: 0 0 25px #ff405c44;
 }
 
-#game-over-score {
-    color: var(--accent);
-    font-size: 38px;
-    font-weight: bold;
+#game-over-screen p {
+    color: var(--muted);
 }
-
-#game-over-screen button {
-    width: 230px;
-    padding: 15px;
-
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: var(--radius);
-
-    font-weight: bold;
-    letter-spacing: 2px;
-
-    transition: 0.2s;
-}
-
-#game-over-screen button:hover {
-    border-color: var(--danger);
-    background: var(--surface-light);
-    transform: translateY(-2px);
-}
-
-/* =========================================
-   RESPONSIVE DESIGN
-========================================= */
 
 @media (max-width: 650px) {
-
     .screen {
         padding: 15px;
     }
@@ -489,10 +442,14 @@ p {
         gap: 12px;
     }
 
-    #game-screen .game-hud {
+    .game-header {
         flex-wrap: wrap;
         justify-content: center;
         text-align: center;
+    }
+
+    .hud-item {
+        align-items: center;
     }
 
     #game-area {
@@ -505,13 +462,17 @@ p {
         max-width: 350px;
     }
 
-    #main-menu h1 {
+    .logo {
         letter-spacing: 6px;
+    }
+
+    .menu-info {
+        flex-wrap: wrap;
+        justify-content: center;
     }
 }
 
 @media (max-width: 400px) {
-
     #game-area {
         height: 300px;
     }
@@ -523,5 +484,9 @@ p {
 
     #level-list {
         gap: 7px;
+    }
+
+    .game-footer {
+        gap: 8px;
     }
 }

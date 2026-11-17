@@ -68,7 +68,7 @@ const CONFIG = {
 // Each minigame will eventually register its
 // own setup, update, and cleanup functions.
 
-const MINIGAMES = [
+/*const MINIGAMES = [
     { id: "slice", name: "SLICE", instruction: "Swipe through targets. Avoid hazards!" },
     { id: "direction", name: "DIRECTION", instruction: "Swipe in the indicated direction." },
     { id: "trace", name: "TRACE", instruction: "Follow the path without leaving it." },
@@ -88,7 +88,14 @@ const MINIGAMES = [
     { id: "follow", name: "FOLLOW", instruction: "Keep tracking the moving object." },
     { id: "combo", name: "COMBO", instruction: "Complete a rapid sequence of actions." }
 ];
-
+*/
+const MINIGAMES = [
+    {
+        id: "stop",
+        name: "Stop",
+        instruction: "Stop the marker inside the highlighted zone."
+    }
+];
 
 
 
@@ -284,8 +291,8 @@ function generateLevelChallenges() {
    LOADING A MINIGAME
 ========================================= */
 
-function loadChallenge() {
 
+function loadChallenge() {
     cleanupMinigame();
     stopTimer();
 
@@ -303,38 +310,43 @@ function loadChallenge() {
         `CHALLENGE ${state.challenge + 1} / ${CONFIG.challengesPerLevel}`;
 
     elements.timer.textContent = state.timeLeft;
-
     elements.feedback.textContent = "GET READY";
 
     const module = MinigameModules[challenge.id];
 
-if (!module) {
-    console.error(`Missing minigame module: ${challenge.id}`);
-    return;
-}
+    if (!module || typeof module.start !== "function") {
+        elements.minigameContent.textContent =
+            `MODULE ERROR: ${challenge.name} could not be loaded.`;
+        console.error("Invalid minigame module:", challenge.id, module);
+        return;
+    }
 
-state.currentModule = module;
+    state.currentModule = module;
 
-module.start(
-    elements.minigameContent,
-    (success = true) => {
-        if (success) {
-            completeChallenge();
-        }
-    },
-    state.level
-);
-
+    try {
+        module.start(
+            elements.minigameContent,
+            (success = true) => {
+                if (success) {
+                    completeChallenge();
+                }
+            },
+            Math.min(5, Math.floor((state.level - 1) / 2) + 1)
+        );
+    } catch (error) {
+        elements.minigameContent.textContent =
+            `ERROR STARTING ${challenge.name}`;
+        console.error("Minigame startup error:", error);
+        return;
+    }
 
     state.running = true;
     state.paused = false;
 
     updateHUD();
     startTimer();
-
-    // Future minigame initialization:
-    // MinigameModules[challenge.id].start();
 }
+
 
 
 function startTimer() {
