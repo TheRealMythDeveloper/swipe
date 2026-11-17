@@ -91,3 +91,10 @@ body {
 
     color: #656978;
 }
+#game {
+    outline: 3px solid red;
+}
+
+#main-menu {
+    outline: 3px solid lime;
+}
