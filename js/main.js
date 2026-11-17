@@ -68,7 +68,7 @@ const CONFIG = {
 // Each minigame will eventually register its
 // own setup, update, and cleanup functions.
 
-/*const MINIGAMES = [
+const MINIGAMES = [
     { id: "slice", name: "SLICE", instruction: "Swipe through targets. Avoid hazards!" },
     { id: "direction", name: "DIRECTION", instruction: "Swipe in the indicated direction." },
     { id: "trace", name: "TRACE", instruction: "Follow the path without leaving it." },
@@ -87,14 +87,6 @@ const CONFIG = {
     { id: "precision", name: "PRECISION", instruction: "Hit the moving target." },
     { id: "follow", name: "FOLLOW", instruction: "Keep tracking the moving object." },
     { id: "combo", name: "COMBO", instruction: "Complete a rapid sequence of actions." }
-];
-*/
-const MINIGAMES = [
-    {
-        id: "stop",
-        name: "Stop",
-        instruction: "Stop the marker inside the highlighted zone."
-    }
 ];
 
 
@@ -508,12 +500,14 @@ function showGameOver() {
 
 
 
-
 function pauseGame() {
+
+    if (!state.running) return;
+
     state.paused = true;
+
     showScreen("pause");
 }
-
 
 
 function resumeGame() {
