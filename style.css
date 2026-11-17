@@ -1,104 +1,409 @@
+
+
 * {
-    margin: 0; 
+    margin: 0;
     padding: 0;
-
     box-sizing: border-box;
+}
 
+:root {
+    --background: #101116;
+    --surface: #171a24;
+    --surface-light: #202533;
+    --cyan: #54d6e8;
+    --cyan-glow: #54d6e855;
+    --red: #ff4268;
+    --white: #ffffff;
+    --muted: #9296a5;
+    --border: #353b4b;
 }
 
 body {
-    background-color:#101116;
-    color: white;
-
+    min-height: 100vh;
+    background: radial-gradient(circle at center, #1b2633, var(--background) 70%);
+    color: var(--white);
     font-family: Arial, sans-serif;
+    overflow-x: hidden;
+}
+
+button {
+    font-family: inherit;
+    cursor: pointer;
 }
 
 #game {
     width: 100%;
     min-height: 100vh;
-
-    display: flex;
-    justify-content: center;
-    align-items: center;
 }
-#main-menu {
+
+
+
+
+.screen {
     width: 100%;
     min-height: 100vh;
-
     display: flex;
     flex-direction: column;
-
-    justify-content: center;
     align-items: center;
+    justify-content: center;
+    padding: 30px;
+}
 
+.hidden {
+    display: none !important;
+}
+
+
+
+
+#main-menu {
     text-align: center;
     gap: 15px;
 }
+
 .logo {
     font-size: 76px;
     font-weight: 900;
     letter-spacing: 12px;
-
-    color: #ffffff;
-
-    text-shadow: 0 0 25px rgba(84, 214, 232, 0.25);
+    text-shadow: 0 0 25px var(--cyan-glow);
 }
 
 .subtitle {
     font-size: 12px;
     letter-spacing: 4px;
-    color: #9296a5;
+    color: var(--muted);
 }
+
 .menu-buttons {
     display: flex;
     flex-direction: column;
-
     gap: 12px;
     margin-top: 30px;
-
     width: 240px;
 }
 
-.menu-buttons button {
+.menu-buttons button,
+#start-level-button {
     padding: 16px;
-
-    border: 1px solid #54d6e8;
+    border: 1px solid var(--cyan);
     border-radius: 6px;
-
     background: transparent;
-    color: #54d6e8;
-
+    color: var(--cyan);
     font-size: 14px;
     font-weight: bold;
     letter-spacing: 3px;
-
-    cursor: pointer;
-
     transition: 0.2s;
 }
 
-.menu-buttons button:hover {
-    background: #54d6e8;
-    color: #101116;
-
-    box-shadow: 0 0 20px rgba(84, 214, 232, 0.3);
+.menu-buttons button:hover,
+#start-level-button:hover {
+    background: var(--cyan);
+    color: var(--background);
+    box-shadow: 0 0 20px var(--cyan-glow);
 }
-.footer-text {
-    margin-top: 55px;
 
+.menu-buttons button:active,
+#start-level-button:active {
+    transform: scale(0.96);
+}
+
+.menu-info {
+    display: flex;
+    gap: 25px;
+    margin-top: 25px;
+    color: var(--muted);
+    font-size: 10px;
+    letter-spacing: 2px;
+}
+
+.footer-text {
+    margin-top: 35px;
     font-size: 11px;
     letter-spacing: 3px;
-
     color: #656978;
 }
-body {
-    background: radial-gradient(
-        circle at center,
-        #1b2633 0%,
-        #101116 65%
-    );
+
+
+
+
+.screen-header {
+    position: absolute;
+    top: 25px;
+    left: 25px;
+    right: 25px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    color: var(--cyan);
+    letter-spacing: 3px;
 }
-@media (max-width: 500px) {
+
+.back-button {
+    padding: 10px 15px;
+    background: transparent;
+    color: var(--cyan);
+    border: 1px solid var(--border);
+    border-radius: 5px;
+}
+
+.screen-content {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 20px;
+    text-align: center;
+}
+
+.screen-content p {
+    color: var(--muted);
+}
+
+
+
+
+#level-list {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 12px;
+    width: min(500px, 90vw);
+}
+
+.level-button {
+    min-height: 70px;
+    background: var(--surface);
+    color: var(--white);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    font-size: 18px;
+}
+
+.level-button:hover,
+.level-button.selected {
+    border-color: var(--cyan);
+    color: var(--cyan);
+}
+
+#start-level-button {
+    width: 200px;
+    margin-top: 15px;
+}
+
+
+
+#game-screen {
+    justify-content: flex-start;
+    gap: 25px;
+}
+
+.game-header {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 15px;
+}
+
+.hud-item {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    color: var(--cyan);
+    font-size: 13px;
+    letter-spacing: 2px;
+}
+
+.hud-label {
+    color: var(--muted);
+    font-size: 9px;
+}
+
+#pause-button {
+    width: 42px;
+    height: 42px;
+    background: var(--surface);
+    color: var(--cyan);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    font-size: 20px;
+}
+
+.challenge-header {
+    text-align: center;
+    margin-top: 20px;
+}
+
+#challenge-number {
+    color: var(--cyan);
+    font-size: 11px;
+    letter-spacing: 3px;
+}
+
+#challenge-title {
+    margin: 12px 0;
+    font-size: 38px;
+    letter-spacing: 5px;
+}
+
+#challenge-instructions {
+    color: var(--muted);
+    font-size: 14px;
+}
+
+
+
+
+#game-area {
+    width: 100%;
+    flex: 1;
+    min-height: 300px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+#minigame-container {
+    position: relative;
+    width: min(800px, 95%);
+    height: min(450px, 60vh);
+    min-height: 300px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    overflow: hidden;
+}
+
+#minigame-content {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    touch-action: none;
+}
+
+
+
+
+#game-feedback {
+    min-height: 25px;
+    color: var(--cyan);
+    font-size: 13px;
+    font-weight: bold;
+    letter-spacing: 3px;
+    text-align: center;
+}
+
+
+
+
+.game-footer {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    color: var(--muted);
+    font-size: 11px;
+    letter-spacing: 2px;
+}
+
+.timer-container {
+    display: flex;
+    gap: 8px;
+    white-space: nowrap;
+}
+
+#timer-label {
+    color: var(--cyan);
+    font-weight: bold;
+}
+
+.progress-container {
+    flex: 1;
+    height: 5px;
+    background: var(--surface-light);
+    border-radius: 5px;
+    overflow: hidden;
+}
+
+#progress-bar {
+    width: 0%;
+    height: 100%;
+    background: var(--cyan);
+    transition: width 0.3s;
+}
+
+#progress-label {
+    white-space: nowrap;
+}
+
+
+
+
+#pause-screen {
+    text-align: center;
+    gap: 15px;
+}
+
+#pause-screen h1 {
+    font-size: 48px;
+    letter-spacing: 8px;
+}
+
+#pause-screen p {
+    color: var(--muted);
+}
+
+
+
+
+#results-screen,
+#game-over-screen {
+    text-align: center;
+    gap: 25px;
+}
+
+#results-screen h1,
+#game-over-screen h1 {
+    font-size: 40px;
+    letter-spacing: 5px;
+}
+
+.results-score {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.results-score span,
+.results-stats span {
+    color: var(--muted);
+    font-size: 11px;
+    letter-spacing: 3px;
+}
+
+.results-score strong {
+    color: var(--cyan);
+    font-size: 64px;
+}
+
+.results-stats {
+    display: flex;
+    gap: 50px;
+}
+
+.results-stats div {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.results-stats strong {
+    font-size: 24px;
+}
+
+
+
+
+@media (max-width: 600px) {
+
     .logo {
         font-size: 52px;
         letter-spacing: 8px;
@@ -108,71 +413,33 @@ body {
         font-size: 10px;
         letter-spacing: 2px;
     }
-}
-.hidden {
-    display: none !important;
-}
-#game-screen {
-    width: 100%;
-    min-height: 100vh;
-    padding: 25px;
 
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: space-between;
-}
+    .screen {
+        padding: 18px;
+    }
 
-#game-screen.hidden {
-    display: none !important;
-}
+    #challenge-title {
+        font-size: 28px;
+    }
 
-.game-header, .game-footer {
-    width: 100%;
-    display: flex;
-    justify-content: space-between;
-    gap: 15px;
+    .game-header {
+        gap: 8px;
+    }
 
-    color: #54d6e8;
-    font-size: 13px;
-    letter-spacing: 2px;
-}
+    .hud-item {
+        font-size: 10px;
+    }
 
-#game-area {
-    flex: 1;
-    width: 100%;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    gap: 20px;
-    text-align: center;
-}
+    #minigame-container {
+        height: 50vh;
+    }
 
-#challenge-title {
-    font-size: 38px;
-    letter-spacing: 5px;
-}
+    .menu-info {
+        flex-direction: column;
+        gap: 10px;
+    }
 
-#challenge-instructions {
-    color: #9296a5;
-}
-
-#challenge-object {
-    width: 100px;
-    height: 100px;
-    margin: 30px;
-
-    background: #54d6e8;
-    border-radius: 50%;
-
-    box-shadow: 0 0 35px #54d6e855;
-}
-
-#game-screen button {
-    padding: 12px 25px;
-    background: transparent;
-    border: 1px solid #54d6e8;
-    color: #54d6e8;
-    cursor: pointer;
+    .results-stats {
+        gap: 25px;
+    }
 }
