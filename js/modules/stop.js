@@ -11,7 +11,12 @@ const Stop = {
     active: false,
 
     start(container, onComplete, difficulty = 1) {
-        this.cleanup();
+    container.innerHTML = `
+        <div style="color:white; text-align:center; padding:40px;">
+            STOP MODULE STARTED
+        </div>
+    `;
+    return;
 
         this.container = container;
         this.onComplete = onComplete;

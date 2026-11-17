@@ -508,14 +508,12 @@ function showGameOver() {
 
 
 
+
 function pauseGame() {
-
-    if (!state.running) return;
-
     state.paused = true;
-
     showScreen("pause");
 }
+
 
 
 function resumeGame() {
