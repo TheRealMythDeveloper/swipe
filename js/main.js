@@ -53,7 +53,7 @@ const elements = {
 
 
 const CONFIG = {
-    challengesPerLevel: 5,
+    challengesPerLevel: 1,
     campaignLevels: 10,
     startingTime: 15,
     baseScore: 100
@@ -321,31 +321,31 @@ function loadChallenge() {
         return;
     }
 
-    state.currentModule = module;
+   
+state.currentModule = module;
+state.running = true;
+state.paused = false;
 
-    try {
-        module.start(
-            elements.minigameContent,
-            (success = true) => {
-                if (success) {
-                    completeChallenge();
-                }
-            },
-            Math.min(5, Math.floor((state.level - 1) / 2) + 1)
-        );
-    } catch (error) {
-        elements.minigameContent.textContent =
-            `ERROR STARTING ${challenge.name}`;
-        console.error("Minigame startup error:", error);
-        return;
-    }
-
-    state.running = true;
-    state.paused = false;
-
-    updateHUD();
-    startTimer();
+try {
+    module.start(
+        elements.minigameContent,
+        (success = true) => {
+            if (success) {
+                completeChallenge();
+            }
+        },
+        Math.min(5, Math.floor((state.level - 1) / 2) + 1)
+    );
+} catch (error) {
+    state.running = false;
+    elements.minigameContent.textContent =
+        `ERROR STARTING ${challenge.name}`;
+    console.error("Minigame startup error:", error);
+    return;
 }
+
+updateHUD();
+startTimer();
 
 
 
