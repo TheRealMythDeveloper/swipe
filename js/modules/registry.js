@@ -1,4 +1,3 @@
-
 const MinigameModules = {
     stop: Stop,
     precision: Precision,
