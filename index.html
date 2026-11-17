@@ -1,21 +1,21 @@
-<DOCTYPE! html>
-    <html lang="en"> 
-        <head>
-            <meta charset="UTF-8"> 
-            <meta name="veiwport" content="width=device-width, initial-scale=1.0">
-            <title>Swipe</title>
- <link rel="stylesheet" href="style.css">
-        </head>
 
-        <body>
-            <main id="game">
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SWIPE</title>
+    <link rel="stylesheet" href="style.css">
+</head>
 
-    <section id="main-menu">
+<body>
 
-        <div class="logo">
-            SWIPE
-        </div>
+<main id="game">
 
+    <!-- MAIN MENU -->
+    <section id="main-menu" class="screen active">
+
+        <div class="logo">SWIPE</div>
         <p class="subtitle">A GAME OF SPEED AND PRECISION</p>
 
         <div class="menu-buttons">
@@ -23,35 +23,183 @@
             <button id="endless-button">ENDLESS</button>
         </div>
 
+        <div class="menu-info">
+            <span>18 MINIGAMES</span>
+            <span>TEST YOUR SKILLS</span>
+        </div>
+
         <p class="footer-text">HOW FAST CAN YOU REACT?</p>
 
     </section>
-       <section id="game-screen" class="hidden">
 
-    <header class="game-header">
-        <span id="mode-label">CAMPAIGN</span>
-        <span id="level-label">LEVEL 1</span>
-        <span id="score-label">SCORE: 0</span>
-    </header>
 
-    <div id="game-area">
-        <h1 id="challenge-title">GET READY</h1>
-        <p id="challenge-instructions">Prepare yourself.</p>
+    <!-- MODE / LEVEL SELECT -->
+    <section id="level-screen" class="screen hidden">
 
-        <div id="challenge-object"></div>
-    </div>
+        <header class="screen-header">
+            <button class="back-button" data-back="menu">← BACK</button>
+            <span id="selected-mode">CAMPAIGN</span>
+        </header>
 
-    <div class="game-footer">
-        <span id="timer-label">TIME: 10</span>
-        <span id="progress-label">CHALLENGE 1 / 5</span>
-    </div>
+        <div class="screen-content">
+            <h1 id="level-screen-title">SELECT LEVEL</h1>
+            <p>Choose your challenge.</p>
 
-    <button id="back-button">BACK TO MENU</button>
+            <div id="level-list"></div>
 
-</section>
+            <button id="start-level-button">START</button>
+        </div>
+
+    </section>
+
+
+    <!-- GAMEPLAY SCREEN -->
+    <section id="game-screen" class="screen hidden">
+
+        <header class="game-header">
+
+            <div class="hud-item">
+                <span class="hud-label">MODE</span>
+                <span id="mode-label">CAMPAIGN</span>
+            </div>
+
+            <div class="hud-item">
+                <span class="hud-label">LEVEL</span>
+                <span id="level-label">1</span>
+            </div>
+
+            <div class="hud-item">
+                <span class="hud-label">SCORE</span>
+                <span id="score-label">0</span>
+            </div>
+
+            <button id="pause-button">Ⅱ</button>
+
+        </header>
+
+
+        <!-- CHALLENGE INFORMATION -->
+        <div class="challenge-header">
+
+            <span id="challenge-number">CHALLENGE 1 / 5</span>
+
+            <h1 id="challenge-title">SLICE</h1>
+
+            <p id="challenge-instructions">
+                Get ready!
+            </p>
+
+        </div>
+
+
+        <!-- SHARED MINIGAME ARENA -->
+        <div id="game-area">
+
+            <div id="minigame-container">
+
+                <!-- MINIGAMES LOAD HERE -->
+
+                <div id="minigame-content"></div>
+
+            </div>
+
+        </div>
+
+
+        <!-- GAME FEEDBACK -->
+        <div id="game-feedback">
+
+            <span id="feedback-message">READY?</span>
+
+        </div>
+
+
+        <!-- GAME FOOTER -->
+        <footer class="game-footer">
+
+            <div class="timer-container">
+                <span>TIME</span>
+                <span id="timer-label">15</span>
+            </div>
+
+            <div class="progress-container">
+                <div id="progress-bar"></div>
+            </div>
+
+            <span id="progress-label">0 / 5</span>
+
+        </footer>
+
+    </section>
+
+
+    <!-- PAUSE SCREEN -->
+    <section id="pause-screen" class="screen hidden">
+
+        <h1>PAUSED</h1>
+        <p>Take a moment.</p>
+
+        <div class="menu-buttons">
+            <button id="resume-button">RESUME</button>
+            <button id="restart-button">RESTART</button>
+            <button id="quit-button">QUIT</button>
+        </div>
+
+    </section>
+
+
+    <!-- RESULTS SCREEN -->
+    <section id="results-screen" class="screen hidden">
+
+        <h1 id="results-title">LEVEL COMPLETE</h1>
+
+        <div class="results-score">
+            <span>FINAL SCORE</span>
+            <strong id="final-score">0</strong>
+        </div>
+
+        <div class="results-stats">
+            <div>
+                <span>COMPLETED</span>
+                <strong id="completed-count">0 / 5</strong>
+            </div>
+
+            <div>
+                <span>BEST STREAK</span>
+                <strong id="best-streak">0</strong>
+            </div>
+        </div>
+
+        <div class="menu-buttons">
+            <button id="continue-button">CONTINUE</button>
+            <button id="retry-button">RETRY</button>
+            <button id="results-menu-button">MAIN MENU</button>
+        </div>
+
+    </section>
+
+
+    <!-- GAME OVER SCREEN -->
+    <section id="game-over-screen" class="screen hidden">
+
+        <h1>GAME OVER</h1>
+        <p>Your run has ended.</p>
+
+        <div class="results-score">
+            <span>FINAL SCORE</span>
+            <strong id="game-over-score">0</strong>
+        </div>
+
+        <div class="menu-buttons">
+            <button id="game-over-retry">TRY AGAIN</button>
+            <button id="game-over-menu">MAIN MENU</button>
+        </div>
+
+    </section>
+
 </main>
-            <script src="js/swipe.js"></script>
-        </body>
-    </html>
 
-    
+<script src="js/swipe.js"></script>
+
+</body>
+</html>
