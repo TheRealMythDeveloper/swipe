@@ -497,20 +497,21 @@ function completeChallenge() {
 
     state.completed++;
     state.streak++;
-
-    state.bestStreak = Math.max(
-        state.bestStreak,
-        state.streak
-    );
+    state.bestStreak = Math.max(state.bestStreak, state.streak);
 
     awardPoints(CONFIG.baseScore);
 
     elements.feedback.textContent = "COMPLETE!";
 
     state.running = false;
+    state.countdownActive = false;
     stopTimer();
 
+    const token = state.challengeToken;
+
     setTimeout(() => {
+        if (token !== state.challengeToken) return;
+
         state.challenge++;
 
         if (state.challenge >= CONFIG.challengesPerLevel) {
@@ -518,8 +519,9 @@ function completeChallenge() {
         } else {
             transitionToNextChallenge();
         }
-    }, 400);
+    }, 450);
 }
+
 
 
 function failChallenge() {
