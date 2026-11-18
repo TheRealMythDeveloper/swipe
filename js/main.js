@@ -26,7 +26,7 @@ const elements = {
     challengeInstructions: document.getElementById("challenge-instructions"),
 
     minigameContent: document.getElementById("minigame-content"),
-    feedback: document.getElementById("game-feedback"),
+    feedback: document.getElementById("feedback-message"),
 
     timer: document.getElementById("timer-label"),
     progressBar: document.getElementById("progress-bar"),
