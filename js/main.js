@@ -115,7 +115,13 @@ const state = {
 currentModule: null,
 levelChallenges: [],
 
-    timerInterval: null
+timerInterval: null,
+
+countdownActive: false,
+countdownIndex: 0,
+countdownTimeout: null,
+transitionTimeout: null,
+challengeToken: 0
 };
 
 
@@ -284,23 +290,26 @@ function generateLevelChallenges() {
 ========================================= */
 
 
+
 function loadChallenge() {
     cleanupMinigame();
     stopTimer();
 
     const challenge = state.levelChallenges[state.challenge];
-
     if (!challenge) return;
+
+    const token = ++state.challengeToken;
 
     state.currentMinigame = challenge;
     state.timeLeft = CONFIG.startingTime;
+    state.running = false;
+    state.paused = false;
+    state.countdownActive = true;
 
     elements.challengeTitle.textContent = challenge.name;
     elements.challengeInstructions.textContent = challenge.instruction;
-
     elements.challengeNumber.textContent =
         `CHALLENGE ${state.challenge + 1} / ${CONFIG.challengesPerLevel}`;
-
     elements.timer.textContent = state.timeLeft;
     elements.feedback.textContent = "GET READY";
 
@@ -309,37 +318,78 @@ function loadChallenge() {
     if (!module || typeof module.start !== "function") {
         elements.minigameContent.textContent =
             `MODULE ERROR: ${challenge.name} could not be loaded.`;
-        console.error("Invalid minigame module:", challenge.id, module);
+        state.countdownActive = false;
         return;
     }
 
-   
-state.currentModule = module;
-state.running = true;
-state.paused = false;
+    state.currentModule = module;
 
-try {
-    module.start(
-        elements.minigameContent,
-        (success = true) => {
-    if (success) {
-        completeChallenge();
-    } else {
-        failChallenge();
+    try {
+        module.start(
+            elements.minigameContent,
+            (success = true) => {
+                if (!state.running || state.paused) return;
+                if (success) completeChallenge();
+                else failChallenge();
+            },
+            Math.min(5, Math.floor((state.level - 1) / 2) + 1)
+        );
+    } catch (error) {
+        state.running = false;
+        state.countdownActive = false;
+        elements.minigameContent.textContent =
+            `ERROR STARTING ${challenge.name}`;
+        console.error("Minigame startup error:", error);
+        return;
     }
-},
-        Math.min(5, Math.floor((state.level - 1) / 2) + 1)
-    );
-} catch (error) {
-    state.running = false;
-    elements.minigameContent.textContent =
-        `ERROR STARTING ${challenge.name}`;
-    console.error("Minigame startup error:", error);
-    return;
+
+    updateHUD();
+    startChallengeCountdown(token);
 }
 
-updateHUD();
-startTimer();
+function startChallengeCountdown(token) {
+    const arena = elements.minigameContent;
+    const sequence = ["3", "2", "2", "1", "GO!"];
+    let index = 0;
+
+    const overlay = document.createElement("div");
+
+    overlay.style.cssText = `
+        position:absolute;
+        inset:0;
+        z-index:9999;
+        display:flex;
+        align-items:center;
+        justify-content:center;
+        background:rgba(16,17,22,0.88);
+        color:white;
+        font-size:clamp(4rem,15vw,9rem);
+        font-weight:900;
+        pointer-events:all;
+    `;
+
+    arena.style.position = "relative";
+    arena.appendChild(overlay);
+
+    const tick = () => {
+        if (token !== state.challengeToken || state.paused) return;
+
+        if (index >= sequence.length) {
+            overlay.remove();
+            state.countdownActive = false;
+            state.running = true;
+            elements.feedback.textContent = "GO!";
+            startTimer();
+            return;
+        }
+
+        overlay.textContent = sequence[index];
+        index++;
+
+        state.countdownTimeout = setTimeout(tick, 650);
+    };
+
+    tick();
 }
 
 
