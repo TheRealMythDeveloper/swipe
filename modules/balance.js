@@ -1,100 +1,97 @@
+
 const Balance = {
-    container: null,
-    onComplete: null,
-    zone: null,
-    object: null,
-    animation: null,
-    position: 50,
-    direction: 1,
-    progress: 0,
-    required: 5,
-    active: false,
-    lastTime: 0,
+    frame: null,
+
+    cleanup() {
+        cancelAnimationFrame(this.frame);
+    },
 
     start(container, onComplete, difficulty = 1) {
         this.cleanup();
+        container.innerHTML = "";
 
-        this.container = container;
-        this.onComplete = onComplete;
-        this.position = 50;
-        this.direction = 1;
-        this.progress = 0;
-        this.required = 5 + Math.floor(difficulty);
-        this.active = true;
-        this.lastTime = 0;
+        const canvas = document.createElement("canvas");
+        canvas.style.cssText = "width:100%;height:100%;display:block;touch-action:none;cursor:none;";
+        container.appendChild(canvas);
 
-        container.innerHTML = `
-            <div style="position:relative;width:100%;height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:30px;color:#54d6e8">
-                <h2>KEEP IT BALANCED</h2>
-                <div class="balance-track" style="position:relative;width:80%;height:20px;background:#353b4b;border-radius:20px">
-                    <div class="balance-zone" style="position:absolute;left:40%;width:20%;height:100%;background:#54d6e8;opacity:.5;border-radius:20px"></div>
-                    <div class="balance-object" style="position:absolute;left:50%;top:-12px;width:25px;height:44px;background:white;border-radius:8px;transform:translateX(-50%)"></div>
-                </div>
-                <p class="balance-progress">BALANCE: 0 / ${this.required}</p>
-                <p>MOVE YOUR POINTER TO STEER</p>
-            </div>
-        `;
+        const ctx = canvas.getContext("2d");
+        let width, height;
+        let mouse = { x: -1000, y: -1000 };
+        let progress = 0;
+        let lastTime = 0;
+        let finished = false;
+        let angle = 0;
 
-        this.zone = container.querySelector(".balance-zone");
-        this.object = container.querySelector(".balance-object");
-        this.track = container.querySelector(".balance-track");
-
-        this.move = event => {
-            const rect = this.track.getBoundingClientRect();
-            const x = event.clientX - rect.left;
-            this.position = Math.max(0, Math.min(100, x / rect.width * 100));
+        const resize = () => {
+            const rect = canvas.getBoundingClientRect();
+            width = canvas.width = rect.width;
+            height = canvas.height = rect.height;
         };
 
-        container.addEventListener("pointermove", this.move);
+        resize();
 
-        this.loop = timestamp => {
-            if (!this.active) return;
+        const move = event => {
+            const rect = canvas.getBoundingClientRect();
+            mouse.x = event.clientX - rect.left;
+            mouse.y = event.clientY - rect.top;
+        };
 
-            if (!this.lastTime) this.lastTime = timestamp;
-            const delta = Math.min(40, timestamp - this.lastTime);
-            this.lastTime = timestamp;
+        canvas.addEventListener("pointermove", move);
 
-            const speed = 0.035 + difficulty * 0.01;
+        const draw = time => {
+            if (finished) return;
 
-            this.direction = this.position > 50 ? 1 : -1;
+            const delta = Math.min((time - (lastTime || time)) / 1000, 0.05);
+            lastTime = time;
+            angle += delta * (0.9 + difficulty * 0.45);
 
-            const center = 50 + Math.sin(timestamp * 0.0015) * 25;
-            const objectPosition = center + (this.position - 50) * 0.25;
+            const x = width / 2 + Math.cos(angle) * width * 0.27;
+            const y = height / 2 + Math.sin(angle * 1.35) * height * 0.25;
+            const distance = Math.hypot(mouse.x - x, mouse.y - y);
 
-            this.object.style.left = `${objectPosition}%`;
-
-            const zoneCenter = center;
-
-            if (Math.abs(objectPosition - zoneCenter) < 7) {
-                this.progress += delta / 1000;
+            if (distance < 65) {
+                progress += delta;
             } else {
-                this.progress = Math.max(0, this.progress - delta / 2000);
+                progress = Math.max(0, progress - delta * 0.65);
             }
 
-            const display = Math.floor(this.progress);
-            this.container.querySelector(".balance-progress").textContent =
-                `BALANCE: ${display} / ${this.required}`;
+            ctx.clearRect(0, 0, width, height);
 
-            if (this.progress >= this.required) {
-                this.active = false;
-                this.onComplete?.();
+            ctx.strokeStyle = "#454c59";
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            ctx.arc(x, y, 65, 0, Math.PI * 2);
+            ctx.stroke();
+
+            ctx.fillStyle = "#55d6be";
+            ctx.beginPath();
+            ctx.arc(x, y, 12, 0, Math.PI * 2);
+            ctx.fill();
+
+            ctx.fillStyle = "#ffffff";
+            ctx.font = "18px Arial";
+            ctx.textAlign = "center";
+            ctx.fillText(`HOLD POSITION: ${Math.floor(progress / 3 * 100)}%`, width / 2, 35);
+
+            ctx.fillStyle = "#303642";
+            ctx.fillRect(width * 0.2, height - 35, width * 0.6, 9);
+            ctx.fillStyle = "#55d6be";
+            ctx.fillRect(width * 0.2, height - 35, width * 0.6 * Math.min(progress / 3, 1), 9);
+
+            if (progress >= 3) {
+                finished = true;
+                onComplete(true);
                 return;
             }
 
-            this.animation = requestAnimationFrame(this.loop);
+            this.frame = requestAnimationFrame(draw);
         };
 
-        this.animation = requestAnimationFrame(this.loop);
-    },
+        this.frame = requestAnimationFrame(draw);
 
-    cleanup() {
-        if (this.animation) cancelAnimationFrame(this.animation);
-
-        if (this.container) {
-            this.container.removeEventListener("pointermove", this.move);
-        }
-
-        this.active = false;
-        this.container = null;
+        this.cleanup = () => {
+            cancelAnimationFrame(this.frame);
+            canvas.removeEventListener("pointermove", move);
+        };
     }
 };

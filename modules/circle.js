@@ -1,128 +1,147 @@
+
 const Circle = {
-    container: null,
-    onComplete: null,
-    points: [],
-    drawing: false,
-    active: false,
+    frame: null,
+    cleanup() {
+        cancelAnimationFrame(this.frame);
+    },
 
     start(container, onComplete, difficulty = 1) {
         this.cleanup();
-        this.container = container;
-        this.onComplete = onComplete;
-        this.points = [];
-        this.drawing = false;
-        this.active = true;
+        container.innerHTML = "";
 
-        container.innerHTML = `
-            <div style="position:relative;width:100%;height:100%;display:grid;place-items:center;color:#54d6e8">
-                <div style="position:absolute;width:180px;height:180px;border:3px dashed #54d6e8;border-radius:50%;opacity:.5"></div>
-                <canvas class="circle-canvas" style="position:absolute;width:100%;height:100%;touch-action:none"></canvas>
-                <div style="position:absolute;bottom:15px">DRAW A CIRCLE</div>
-            </div>
-        `;
+        const canvas = document.createElement("canvas");
+        canvas.style.cssText = "width:100%;height:100%;display:block;touch-action:none;cursor:crosshair;";
+        container.appendChild(canvas);
 
-        this.canvas = container.querySelector(".circle-canvas");
-        this.ctx = this.canvas.getContext("2d");
+        const ctx = canvas.getContext("2d");
+        let width, height;
+        let drawing = false;
+        let points = [];
+        let completed = false;
+        let guideAngle = 0;
 
-        this.resize();
-
-        this.down = event => {
-            if (!this.active) return;
-            this.drawing = true;
-            this.points = [];
-            this.addPoint(event);
+        const resize = () => {
+            const rect = canvas.getBoundingClientRect();
+            width = canvas.width = rect.width;
+            height = canvas.height = rect.height;
         };
 
-        this.move = event => {
-            if (!this.drawing || !this.active) return;
-            this.addPoint(event);
-            this.draw();
-        };
+        resize();
 
-        this.up = () => {
-            if (!this.drawing) return;
-            this.drawing = false;
-            this.checkCircle();
-        };
-
-        this.canvas.addEventListener("pointerdown", this.down);
-        this.canvas.addEventListener("pointermove", this.move);
-        this.canvas.addEventListener("pointerup", this.up);
-        this.canvas.addEventListener("pointercancel", this.up);
-    },
-
-    resize() {
-        const rect = this.container.getBoundingClientRect();
-        this.canvas.width = rect.width;
-        this.canvas.height = rect.height;
-    },
-
-    addPoint(event) {
-        const rect = this.canvas.getBoundingClientRect();
-        this.points.push({
-            x: event.clientX - rect.left,
-            y: event.clientY - rect.top
+        const center = () => ({
+            x: width / 2,
+            y: height / 2
         });
-    },
 
-    draw() {
-        this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
-        if (this.points.length < 2) return;
+        const radius = () => Math.min(width, height) * 0.25;
 
-        this.ctx.beginPath();
-        this.ctx.moveTo(this.points[0].x, this.points[0].y);
+        const position = event => {
+            const rect = canvas.getBoundingClientRect();
+            return {
+                x: event.clientX - rect.left,
+                y: event.clientY - rect.top
+            };
+        };
 
-        for (const point of this.points.slice(1)) {
-            this.ctx.lineTo(point.x, point.y);
-        }
+        const draw = () => {
+            ctx.clearRect(0, 0, width, height);
 
-        this.ctx.strokeStyle = "#54d6e8";
-        this.ctx.lineWidth = 4;
-        this.ctx.lineCap = "round";
-        this.ctx.stroke();
-    },
+            const c = center();
+            const r = radius();
 
-    checkCircle() {
-        if (this.points.length < 20) return;
+            ctx.strokeStyle = "#555b69";
+            ctx.lineWidth = 2;
+            ctx.setLineDash([7, 9]);
+            ctx.beginPath();
+            ctx.arc(c.x, c.y, r, 0, Math.PI * 2);
+            ctx.stroke();
+            ctx.setLineDash([]);
 
-        const first = this.points[0];
-        const last = this.points[this.points.length - 1];
-        const closure = Math.hypot(first.x - last.x, first.y - last.y);
+            const guideX = c.x + Math.cos(guideAngle) * r;
+            const guideY = c.y + Math.sin(guideAngle) * r;
 
-        const centerX = this.points.reduce((sum, p) => sum + p.x, 0) / this.points.length;
-        const centerY = this.points.reduce((sum, p) => sum + p.y, 0) / this.points.length;
+            ctx.fillStyle = "#55d6be";
+            ctx.beginPath();
+            ctx.arc(guideX, guideY, 7, 0, Math.PI * 2);
+            ctx.fill();
 
-        const radii = this.points.map(p =>
-            Math.hypot(p.x - centerX, p.y - centerY)
-        );
+            if (points.length > 1) {
+                ctx.strokeStyle = "#ffffff";
+                ctx.lineWidth = 4;
+                ctx.lineCap = "round";
+                ctx.lineJoin = "round";
+                ctx.beginPath();
+                ctx.moveTo(points[0].x, points[0].y);
 
-        const average = radii.reduce((a, b) => a + b, 0) / radii.length;
+                for (let i = 1; i < points.length; i++) {
+                    ctx.lineTo(points[i].x, points[i].y);
+                }
 
-        const variance = radii.reduce(
-            (sum, r) => sum + Math.abs(r - average), 0
-        ) / radii.length;
+                ctx.stroke();
+            }
 
-        if (closure < average * 0.35 && variance < average * 0.3) {
-            this.active = false;
-            this.onComplete?.();
-        } else {
-            this.points = [];
-            this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
-        }
-    },
+            guideAngle += 0.025 + difficulty * 0.006;
+            this.frame = requestAnimationFrame(draw);
+        };
 
-    cleanup() {
-        if (this.canvas) {
-            this.canvas.removeEventListener("pointerdown", this.down);
-            this.canvas.removeEventListener("pointermove", this.move);
-            this.canvas.removeEventListener("pointerup", this.up);
-            this.canvas.removeEventListener("pointercancel", this.up);
-        }
+        const down = event => {
+            const p = position(event);
+            const c = center();
 
-        this.points = [];
-        this.drawing = false;
-        this.active = false;
-        this.container = null;
-        this.canvas = null;
+            if (Math.hypot(p.x - c.x, p.y - c.y) > radius() * 1.7) return;
+
+            drawing = true;
+            points = [p];
+            canvas.setPointerCapture(event.pointerId);
+        };
+
+        const move = event => {
+            if (!drawing) return;
+            points.push(position(event));
+        };
+
+        const up = () => {
+            if (!drawing || completed) return;
+            drawing = false;
+
+            if (points.length < 30) {
+                points = [];
+                return;
+            }
+
+            const c = center();
+            const distances = points.map(p =>
+                Math.hypot(p.x - c.x, p.y - c.y)
+            );
+
+            const average = distances.reduce((a, b) => a + b, 0) / distances.length;
+            const variation = distances.reduce((a, b) => a + Math.abs(b - average), 0) / distances.length;
+            const coverage = Math.abs(points[points.length - 1].x - points[0].x) +
+                Math.abs(points[points.length - 1].y - points[0].y);
+
+            const accuracy = variation / Math.max(average, 1);
+
+            if (accuracy < 0.19 && coverage < radius() * 1.1) {
+                completed = true;
+                onComplete(true);
+            } else {
+                points = [];
+            }
+        };
+
+        canvas.addEventListener("pointerdown", down);
+        canvas.addEventListener("pointermove", move);
+        canvas.addEventListener("pointerup", up);
+        canvas.addEventListener("pointercancel", up);
+
+        draw();
+
+        this.cleanup = () => {
+            cancelAnimationFrame(this.frame);
+            canvas.removeEventListener("pointerdown", down);
+            canvas.removeEventListener("pointermove", move);
+            canvas.removeEventListener("pointerup", up);
+            canvas.removeEventListener("pointercancel", up);
+        };
     }
 };

@@ -1,149 +1,89 @@
 
 const Combo = {
-    container: null,
-    onComplete: null,
-    difficulty: 1,
-    sequence: [],
-    current: 0,
-    active: false,
-    startPoint: null,
-    prompt: null,
-    button: null,
+    timeout: null,
+    cleanup() {
+        clearTimeout(this.timeout);
+    },
 
     start(container, onComplete, difficulty = 1) {
-        this.container = container;
-        this.onComplete = onComplete;
-        this.difficulty = difficulty;
-        this.current = 0;
-        this.active = true;
+        this.cleanup();
+        container.innerHTML = "";
+        container.style.position = "relative";
 
-        const actions = ["UP", "DOWN", "LEFT", "RIGHT", "TAP"];
-        const length = 5 + Math.floor(difficulty);
+        let round = 0;
+        let finished = false;
+        let current = null;
 
-        this.sequence = Array.from({ length }, () =>
-            actions[Math.floor(Math.random() * actions.length)]
-        );
+        const required = 5 + difficulty;
 
-        container.innerHTML = `
-            <div style="text-align:center;color:white;padding:12px;">
-                <h2>COMBO</h2>
-                <p>Complete the sequence!</p>
-                <h1 id="combo-prompt" style="
-                    font-size:48px;
-                    color:#45b9ff;
-                    margin:25px;
-                ">${this.sequence[0]}</h1>
-                <p id="combo-progress">1 / ${length}</p>
-                <button id="combo-tap" style="
-                    padding:15px 35px;
-                    background:#292b35;
-                    color:white;
-                    border:2px solid #45b9ff;
-                    border-radius:10px;
-                    cursor:pointer;
-                    font-size:18px;
-                ">TAP</button>
-                <p style="margin-top:18px;font-size:13px;color:#aaa;">
-                    Swipe in the prompted direction, or press TAP.
-                </p>
-            </div>
-        `;
+        const instruction = document.createElement("div");
+        instruction.style.cssText = "position:absolute;top:12%;left:0;width:100%;text-align:center;color:white;font-size:24px;font-weight:bold;";
+        container.appendChild(instruction);
 
-        this.prompt = container.querySelector("#combo-prompt");
-        this.button = container.querySelector("#combo-tap");
+        const area = document.createElement("div");
+        area.style.cssText = "position:absolute;inset:25% 8% 8%;";
+        container.appendChild(area);
 
-        this.button.addEventListener("pointerdown", this.handleTap);
-        container.addEventListener("pointerdown", this.handleDown);
-        container.addEventListener("pointerup", this.handleUp);
-    },
+        const next = () => {
+            if (finished) return;
 
-    handleTap: (event) => {
-        event.stopPropagation();
+            area.innerHTML = "";
+            round++;
 
-        if (!Combo.active) return;
+            if (round > required) {
+                finished = true;
+                onComplete(true);
+                return;
+            }
 
-        if (Combo.sequence[Combo.current] === "TAP") {
-            Combo.advance();
-        } else {
-            Combo.wrong();
-        }
-    },
+            const type = Math.floor(Math.random() * 3);
+            const button = document.createElement("button");
+            button.type = "button";
 
-    handleDown: (event) => {
-        if (!Combo.active) return;
-        if (event.target.closest("#combo-tap")) return;
+            button.style.cssText = "position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:100px;height:100px;border:2px solid #55d6be;background:#202c32;color:white;font-size:24px;border-radius:8px;cursor:pointer;";
 
-        Combo.startPoint = {
-            x: event.clientX,
-            y: event.clientY
+            if (type === 0) {
+                current = "CLICK";
+                button.textContent = "CLICK";
+                button.addEventListener("pointerdown", next, { once: true });
+            } else if (type === 1) {
+                current = "HOLD";
+                button.textContent = "HOLD";
+                let held = false;
+                button.addEventListener("pointerdown", () => {
+                    held = true;
+                    button.textContent = "RELEASE";
+                    this.timeout = setTimeout(() => {
+                        if (held) next();
+                    }, 650);
+                });
+                button.addEventListener("pointerup", () => {
+                    held = false;
+                    clearTimeout(this.timeout);
+                });
+                button.addEventListener("pointerleave", () => {
+                    held = false;
+                    clearTimeout(this.timeout);
+                });
+            } else {
+                current = "DOUBLE";
+                button.textContent = "DOUBLE";
+                let clicks = 0;
+                button.addEventListener("pointerdown", () => {
+                    clicks++;
+                    if (clicks >= 2) next();
+                });
+            }
+
+            instruction.textContent = `COMBO ${round} / ${required}  |  ${current}`;
+            area.appendChild(button);
         };
-    },
 
-    handleUp: (event) => {
-        if (!Combo.active || !Combo.startPoint) return;
+        next();
 
-        const dx = event.clientX - Combo.startPoint.x;
-        const dy = event.clientY - Combo.startPoint.y;
-
-        Combo.startPoint = null;
-
-        if (Math.hypot(dx, dy) < 30) return;
-
-        let direction;
-
-        if (Math.abs(dx) > Math.abs(dy)) {
-            direction = dx > 0 ? "RIGHT" : "LEFT";
-        } else {
-            direction = dy > 0 ? "DOWN" : "UP";
-        }
-
-        if (Combo.sequence[Combo.current] === direction) {
-            Combo.advance();
-        } else {
-            Combo.wrong();
-        }
-    },
-
-    advance() {
-        this.current++;
-
-        if (this.current >= this.sequence.length) {
-            this.finish(true);
-            return;
-        }
-
-        this.prompt.textContent = this.sequence[this.current];
-
-        this.container.querySelector("#combo-progress").textContent =
-            `${this.current + 1} / ${this.sequence.length}`;
-    },
-
-    wrong() {
-        this.prompt.textContent = "WRONG!";
-        this.prompt.style.color = "#ff405c";
-
-        setTimeout(() => {
-            if (!this.active) return;
-
-            this.prompt.textContent = this.sequence[this.current];
-            this.prompt.style.color = "#45b9ff";
-        }, 400);
-    },
-
-    finish(success) {
-        if (!this.active) return;
-        this.active = false;
-
-        if (success) this.onComplete(true);
-    },
-
-    cleanup() {
-        this.active = false;
-
-        this.button?.removeEventListener("pointerdown", this.handleTap);
-        this.container?.removeEventListener("pointerdown", this.handleDown);
-        this.container?.removeEventListener("pointerup", this.handleUp);
-
-        this.startPoint = null;
+        this.cleanup = () => {
+            clearTimeout(this.timeout);
+            area.innerHTML = "";
+        };
     }
 };

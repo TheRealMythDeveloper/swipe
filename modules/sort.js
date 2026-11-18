@@ -1,10 +1,19 @@
-const Sort = {
+
+const Stop = {
     container: null,
     onComplete: null,
-    objects: [],
-    hits: 0,
-    required: 6,
+    marker: null,
+    zone: null,
+    progress: null,
+    animation: null,
     active: false,
+    position: 5,
+    direction: 1,
+    speed: 0.045,
+    hits: 0,
+    required: 4,
+    zonePosition: 43,
+    lastTime: 0,
 
     start(container, onComplete, difficulty = 1) {
         this.cleanup();
@@ -12,120 +21,99 @@ const Sort = {
         this.container = container;
         this.onComplete = onComplete;
         this.hits = 0;
-        this.required = 6 + Math.floor(difficulty);
+        this.required = 4;
+        this.position = 5;
+        this.direction = 1;
+        this.speed = 0.045 + difficulty * 0.012;
+        this.zonePosition = 43;
+        this.lastTime = 0;
         this.active = true;
-        this.objects = [];
 
         container.innerHTML = `
-            <div style="position:relative;width:100%;height:100%;color:white">
-                <div style="position:absolute;top:10px;left:0;width:100%;text-align:center;color:#54d6e8" class="sort-score">SORTED: 0 / ${this.required}</div>
-                <div style="position:absolute;bottom:15px;left:5%;width:40%;height:25%;border:2px solid #54d6e8;border-radius:10px;display:grid;place-items:center;color:#54d6e8" data-zone="blue">BLUE</div>
-                <div style="position:absolute;bottom:15px;right:5%;width:40%;height:25%;border:2px solid #ff4268;border-radius:10px;display:grid;place-items:center;color:#ff4268" data-zone="red">RED</div>
-                <div class="sort-items"></div>
+            <div style="position:relative;width:100%;height:100%;min-height:300px;background:#171a24;color:white;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:35px;overflow:hidden">
+                <h2 style="color:#54d6e8">STOP IN THE ZONE</h2>
+                <p>Click when the marker enters the highlighted area.</p>
+                <div style="position:relative;width:86%;height:48px;background:#343b4b;border-radius:5px">
+                    <div class="stop-zone" style="position:absolute;top:0;left:43%;width:12%;height:100%;background:#35c978;opacity:.55"></div>
+                    <div class="stop-marker" style="position:absolute;top:-9px;left:5%;width:8px;height:66px;background:white;border-radius:4px"></div>
+                </div>
+                <p class="stop-progress">HITS: 0 / 4</p>
+                <p class="stop-message">READY?</p>
             </div>
         `;
 
-        this.layer = container.querySelector(".sort-items");
-        this.spawn();
+        this.marker = container.querySelector(".stop-marker");
+        this.zone = container.querySelector(".stop-zone");
+        this.progress = container.querySelector(".stop-progress");
+        this.message = container.querySelector(".stop-message");
+
+        this.handlePress = () => this.attempt();
+        container.addEventListener("pointerdown", this.handlePress);
+
+        this.animation = requestAnimationFrame(time => this.animate(time));
     },
 
-    spawn() {
+    animate(time) {
         if (!this.active) return;
 
-        const color = Math.random() < 0.5 ? "blue" : "red";
-        const object = document.createElement("div");
+        if (!this.lastTime) this.lastTime = time;
 
-        Object.assign(object.style, {
-            position: "absolute",
-            left: `${20 + Math.random() * 60}%`,
-            top: `${25 + Math.random() * 25}%`,
-            width: "45px",
-            height: "45px",
-            borderRadius: "8px",
-            background: color === "blue" ? "#54d6e8" : "#ff4268",
-            cursor: "grab",
-            touchAction: "none"
-        });
+        const delta = Math.min(time - this.lastTime, 40);
+        this.lastTime = time;
 
-        this.layer.appendChild(object);
+        this.position += this.direction * this.speed * delta;
 
-        let offsetX = 0;
-        let offsetY = 0;
-        let dragging = false;
+        if (this.position >= 96) {
+            this.position = 96;
+            this.direction = -1;
+        }
 
-        const down = event => {
-            dragging = true;
-            const rect = object.getBoundingClientRect();
-            offsetX = event.clientX - rect.left;
-            offsetY = event.clientY - rect.top;
-            object.setPointerCapture(event.pointerId);
-        };
+        if (this.position <= 2) {
+            this.position = 2;
+            this.direction = 1;
+        }
 
-        const move = event => {
-            if (!dragging) return;
+        this.marker.style.left = `${this.position}%`;
 
-            const rect = this.container.getBoundingClientRect();
-            object.style.left = `${event.clientX - rect.left - offsetX}px`;
-            object.style.top = `${event.clientY - rect.top - offsetY}px`;
-        };
+        this.animation = requestAnimationFrame(nextTime => this.animate(nextTime));
+    },
 
-        const up = () => {
-            if (!dragging) return;
-            dragging = false;
+    attempt() {
+        if (!this.active) return;
 
-            const rect = object.getBoundingClientRect();
-            const centerX = rect.left + rect.width / 2;
-            const centerY = rect.top + rect.height / 2;
+        if (
+            this.position >= this.zonePosition &&
+            this.position <= this.zonePosition + 12
+        ) {
+            this.hits++;
+            this.progress.textContent = `HITS: ${this.hits} / ${this.required}`;
+            this.message.textContent = "NICE HIT";
 
-            const zones = [...this.container.querySelectorAll("[data-zone]")];
-
-            const zone = zones.find(item => {
-                const r = item.getBoundingClientRect();
-                return centerX >= r.left && centerX <= r.right &&
-                    centerY >= r.top && centerY <= r.bottom;
-            });
-
-            if (zone) {
-                if (zone.dataset.zone === color) {
-                    this.hits++;
-                    object.remove();
-                    this.container.querySelector(".sort-score").textContent =
-                        `SORTED: ${this.hits} / ${this.required}`;
-
-                    if (this.hits >= this.required) {
-                        this.active = false;
-                        this.onComplete?.();
-                    } else {
-                        this.spawn();
-                    }
-                } else {
-                    object.style.left = "50%";
-                    object.style.top = "35%";
-                }
+            if (this.hits >= this.required) {
+                this.active = false;
+                this.onComplete?.(true);
+                return;
             }
-        };
 
-        object.addEventListener("pointerdown", down);
-        object.addEventListener("pointermove", move);
-        object.addEventListener("pointerup", up);
-
-        this.objects.push({
-            element: object,
-            cleanup: () => {
-                object.removeEventListener("pointerdown", down);
-                object.removeEventListener("pointermove", move);
-                object.removeEventListener("pointerup", up);
-            }
-        });
+            this.zonePosition = 8 + Math.random() * 76;
+            this.zone.style.left = `${this.zonePosition}%`;
+        } else {
+            this.message.textContent = "MISSED. TRY AGAIN";
+        }
     },
 
     cleanup() {
+        if (this.animation) cancelAnimationFrame(this.animation);
+
+        if (this.container && this.handlePress) {
+            this.container.removeEventListener("pointerdown", this.handlePress);
+        }
+
         this.active = false;
-        this.objects.forEach(item => {
-            item.cleanup();
-            item.element.remove();
-        });
-        this.objects = [];
         this.container = null;
+        this.marker = null;
+        this.zone = null;
+        this.progress = null;
+        this.animation = null;
     }
 };

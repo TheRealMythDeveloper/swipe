@@ -322,10 +322,12 @@ try {
     module.start(
         elements.minigameContent,
         (success = true) => {
-            if (success) {
-                completeChallenge();
-            }
-        },
+    if (success) {
+        completeChallenge();
+    } else {
+        failChallenge();
+    }
+},
         Math.min(5, Math.floor((state.level - 1) / 2) + 1)
     );
 } catch (error) {
@@ -344,17 +346,42 @@ startTimer();
 function startTimer() {
     stopTimer();
 
+    state.timeLeft = CONFIG.startingTime;
+    updateTimerDisplay();
+
     state.timerInterval = setInterval(() => {
         if (!state.running || state.paused) return;
 
         state.timeLeft--;
-        elements.timer.textContent = state.timeLeft;
+        updateTimerDisplay();
 
         if (state.timeLeft <= 0) {
             failChallenge();
         }
     }, 1000);
 }
+
+function updateTimerDisplay() {
+    const timer = elements.timer;
+    const value = state.timeLeft;
+
+    timer.textContent = value;
+
+    timer.classList.remove(
+        "timer-warning",
+        "timer-danger",
+        "timer-critical"
+    );
+
+    if (value <= 2) {
+        timer.classList.add("timer-critical");
+    } else if (value <= 5) {
+        timer.classList.add("timer-danger");
+    } else if (value <= 10) {
+        timer.classList.add("timer-warning");
+    }
+}
+
 
 
 
@@ -376,6 +403,42 @@ function awardPoints(amount) {
     state.levelScore += amount;
 
     updateHUD();
+}
+
+function transitionToNextChallenge() {
+    const arena = elements.minigameContent;
+
+    state.running = false;
+    stopTimer();
+
+    if (state.currentModule) {
+        state.currentModule.cleanup();
+        state.currentModule = null;
+    }
+
+    const transitions = [
+        "transition-fade",
+        "transition-spin",
+        "transition-shatter",
+        "transition-swipe"
+    ];
+
+    const chosen = transitions[
+        Math.floor(Math.random() * transitions.length)
+    ];
+
+    arena.classList.remove(...transitions);
+    void arena.offsetWidth;
+    arena.classList.add(chosen);
+
+    const finish = () => {
+        arena.classList.remove(...transitions);
+        loadChallenge();
+    };
+
+    arena.addEventListener("animationend", finish, { once: true });
+
+    setTimeout(finish, 650);
 }
 
 
@@ -401,17 +464,14 @@ function completeChallenge() {
     cleanupMinigame();
 
     setTimeout(() => {
+    state.challenge++;
 
-        state.challenge++;
-
-        if (state.challenge >= CONFIG.challengesPerLevel) {
-            finishLevel();
-        } else {
-            loadChallenge();
-        }
-
-    }, 700);
-}
+    if (state.challenge >= CONFIG.challengesPerLevel) {
+        finishLevel();
+    } else {
+        transitionToNextChallenge();
+    }
+}, 400);
 
 
 function failChallenge() {

@@ -1,14 +1,19 @@
+
 const Stop = {
     container: null,
     onComplete: null,
-    target: null,
-    interval: null,
-    hits: 0,
-    required: 5,
-    position: 0,
-    direction: 1,
-    speed: 2,
+    marker: null,
+    zone: null,
+    progress: null,
+    animation: null,
     active: false,
+    position: 5,
+    direction: 1,
+    speed: 0.045,
+    hits: 0,
+    required: 4,
+    zonePosition: 43,
+    lastTime: 0,
 
     start(container, onComplete, difficulty = 1) {
         this.cleanup();
@@ -16,72 +21,99 @@ const Stop = {
         this.container = container;
         this.onComplete = onComplete;
         this.hits = 0;
-        this.required = 5;
-        this.position = 10;
+        this.required = 4;
+        this.position = 5;
         this.direction = 1;
-        this.speed = 1.5 + difficulty * 0.5;
+        this.speed = 0.045 + difficulty * 0.012;
+        this.zonePosition = 43;
+        this.lastTime = 0;
         this.active = true;
 
         container.innerHTML = `
-            <div style="position:relative;width:100%;height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:35px;color:#54d6e8">
-                <h2>STOP IN THE ZONE</h2>
-                <div class="stop-track" style="position:relative;width:80%;height:35px;background:#353b4b;border-radius:20px">
-                    <div style="position:absolute;left:45%;width:10%;height:100%;background:#54d6e8;border-radius:20px;opacity:.4"></div>
-                    <div class="stop-marker" style="position:absolute;left:10%;top:-5px;width:12px;height:45px;background:white;border-radius:5px"></div>
+            <div style="position:relative;width:100%;height:100%;min-height:300px;background:#171a24;color:white;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:35px;overflow:hidden">
+                <h2 style="color:#54d6e8">STOP IN THE ZONE</h2>
+                <p>Click when the marker enters the highlighted area.</p>
+                <div style="position:relative;width:86%;height:48px;background:#343b4b;border-radius:5px">
+                    <div class="stop-zone" style="position:absolute;top:0;left:43%;width:12%;height:100%;background:#35c978;opacity:.55"></div>
+                    <div class="stop-marker" style="position:absolute;top:-9px;left:5%;width:8px;height:66px;background:white;border-radius:4px"></div>
                 </div>
-                <p class="stop-progress">HITS: 0 / 5</p>
-                <p>CLICK OR RELEASE TO STOP</p>
+                <p class="stop-progress">HITS: 0 / 4</p>
+                <p class="stop-message">READY?</p>
             </div>
         `;
 
-        this.target = container.querySelector(".stop-marker");
+        this.marker = container.querySelector(".stop-marker");
+        this.zone = container.querySelector(".stop-zone");
+        this.progress = container.querySelector(".stop-progress");
+        this.message = container.querySelector(".stop-message");
 
-        this.interval = setInterval(() => {
-            if (!this.active) return;
+        this.handlePress = () => this.attempt();
+        container.addEventListener("pointerdown", this.handlePress);
 
-            this.position += this.direction * this.speed;
+        this.animation = requestAnimationFrame(time => this.animate(time));
+    },
 
-            if (this.position >= 96 || this.position <= 0) {
-                this.direction *= -1;
-            }
+    animate(time) {
+        if (!this.active) return;
 
-            this.position = Math.max(0, Math.min(96, this.position));
-            this.target.style.left = `${this.position}%`;
-        }, 16);
+        if (!this.lastTime) this.lastTime = time;
 
-        this.handleStop = () => this.attempt();
+        const delta = Math.min(time - this.lastTime, 40);
+        this.lastTime = time;
 
-        container.addEventListener("pointerup", this.handleStop);
+        this.position += this.direction * this.speed * delta;
+
+        if (this.position >= 96) {
+            this.position = 96;
+            this.direction = -1;
+        }
+
+        if (this.position <= 2) {
+            this.position = 2;
+            this.direction = 1;
+        }
+
+        this.marker.style.left = `${this.position}%`;
+
+        this.animation = requestAnimationFrame(nextTime => this.animate(nextTime));
     },
 
     attempt() {
         if (!this.active) return;
 
-        if (this.position >= 43 && this.position <= 53) {
+        if (
+            this.position >= this.zonePosition &&
+            this.position <= this.zonePosition + 12
+        ) {
             this.hits++;
-            this.container.querySelector(".stop-progress").textContent =
-                `HITS: ${this.hits} / ${this.required}`;
+            this.progress.textContent = `HITS: ${this.hits} / ${this.required}`;
+            this.message.textContent = "NICE HIT";
 
             if (this.hits >= this.required) {
                 this.active = false;
-                this.onComplete?.();
+                this.onComplete?.(true);
+                return;
             }
+
+            this.zonePosition = 8 + Math.random() * 76;
+            this.zone.style.left = `${this.zonePosition}%`;
         } else {
-            this.hits = 0;
-            this.container.querySelector(".stop-progress").textContent =
-                "MISSED! START AGAIN";
+            this.message.textContent = "MISSED. TRY AGAIN";
         }
     },
 
     cleanup() {
-        clearInterval(this.interval);
+        if (this.animation) cancelAnimationFrame(this.animation);
 
-        if (this.container && this.handleStop) {
-            this.container.removeEventListener("pointerup", this.handleStop);
+        if (this.container && this.handlePress) {
+            this.container.removeEventListener("pointerdown", this.handlePress);
         }
 
         this.active = false;
         this.container = null;
-        this.target = null;
+        this.marker = null;
+        this.zone = null;
+        this.progress = null;
+        this.animation = null;
     }
 };

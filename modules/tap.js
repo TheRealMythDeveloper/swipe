@@ -1,100 +1,90 @@
+
 const Tap = {
-    container: null,
-    onComplete: null,
-    targets: [],
-    sequence: [],
-    current: 0,
-    required: 5,
-    active: false,
+    interval: null,
+    timeout: null,
+
+    cleanup() {
+        clearInterval(this.interval);
+        clearTimeout(this.timeout);
+    },
 
     start(container, onComplete, difficulty = 1) {
         this.cleanup();
-        this.container = container;
-        this.onComplete = onComplete;
-        this.current = 0;
-        this.required = 5 + Math.floor(difficulty);
-        this.active = true;
-        this.targets = [];
+        container.innerHTML = "";
+        container.style.position = "relative";
+        container.style.overflow = "hidden";
 
-        this.sequence = Array.from(
-            { length: this.required },
-            (_, i) => i + 1
-        );
+        let hits = 0;
+        let target = null;
+        let finished = false;
+        const required = 7 + difficulty;
 
-        const shuffled = [...this.sequence].sort(() => Math.random() - 0.5);
+        const label = document.createElement("div");
+        label.style.cssText = "position:absolute;top:14px;left:50%;transform:translateX(-50%);font-size:18px;color:white;z-index:2;";
+        label.textContent = `TARGETS: 0 / ${required}`;
+        container.appendChild(label);
 
-        container.innerHTML = `
-            <div style="position:relative;width:100%;height:100%;color:#54d6e8">
-                <div class="tap-instructions" style="position:absolute;top:12px;width:100%;text-align:center">
-                    TAP IN ORDER: 1 → ${this.required}
-                </div>
-                <div class="tap-targets"></div>
-                <div class="tap-progress" style="position:absolute;bottom:12px;width:100%;text-align:center">
-                    0 / ${this.required}
-                </div>
-            </div>
-        `;
+        const spawn = () => {
+            if (finished) return;
 
-        const layer = container.querySelector(".tap-targets");
+            if (target) target.remove();
 
-        shuffled.forEach(number => {
-            const button = document.createElement("button");
+            const size = Math.max(34, 62 - difficulty * 4);
+            target = document.createElement("button");
+            target.type = "button";
+            target.textContent = String(hits + 1);
+            target.style.cssText = `
+                position:absolute;
+                width:${size}px;
+                height:${size}px;
+                border:2px solid #55d6be;
+                border-radius:50%;
+                background:#182c32;
+                color:white;
+                font-size:20px;
+                cursor:pointer;
+                transform:translate(-50%,-50%);
+            `;
 
-            button.textContent = number;
+            const x = 8 + Math.random() * 84;
+            const y = 15 + Math.random() * 75;
 
-            Object.assign(button.style, {
-                position: "absolute",
-                left: `${10 + Math.random() * 75}%`,
-                top: `${20 + Math.random() * 55}%`,
-                width: "48px",
-                height: "48px",
-                borderRadius: "50%",
-                border: "2px solid #54d6e8",
-                background: "#171a24",
-                color: "#54d6e8",
-                fontSize: "18px",
-                cursor: "pointer"
+            target.style.left = x + "%";
+            target.style.top = y + "%";
+
+            target.addEventListener("pointerdown", event => {
+                event.stopPropagation();
+                if (finished) return;
+
+                hits++;
+                label.textContent = `TARGETS: ${hits} / ${required}`;
+                target.remove();
+                target = null;
+
+                if (hits >= required) {
+                    finished = true;
+                    onComplete(true);
+                } else {
+                    this.timeout = setTimeout(spawn, 150);
+                }
             });
 
-            button.addEventListener("click", () => this.select(number, button));
+            container.appendChild(target);
 
-            layer.appendChild(button);
-            this.targets.push(button);
-        });
-    },
+            this.timeout = setTimeout(() => {
+                if (finished) return;
+                if (target) target.remove();
+                target = null;
+                spawn();
+            }, Math.max(900, 1800 - difficulty * 150));
+        };
 
-    select(number, button) {
-        if (!this.active) return;
+        spawn();
 
-        if (number !== this.current + 1) {
-            this.current = 0;
-            this.container.querySelector(".tap-progress").textContent =
-                "WRONG ORDER! START AGAIN";
-
-            this.targets.forEach(target => {
-                target.disabled = false;
-                target.style.opacity = "1";
-            });
-
-            return;
-        }
-
-        this.current++;
-        button.disabled = true;
-        button.style.opacity = "0.25";
-
-        this.container.querySelector(".tap-progress").textContent =
-            `${this.current} / ${this.required}`;
-
-        if (this.current >= this.required) {
-            this.active = false;
-            this.onComplete?.();
-        }
-    },
-
-    cleanup() {
-        this.active = false;
-        this.targets = [];
-        this.container = null;
+        this.cleanup = () => {
+            clearTimeout(this.timeout);
+            clearInterval(this.interval);
+            if (target) target.remove();
+        };
     }
 };

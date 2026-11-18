@@ -1,80 +1,129 @@
 
 const Direction = {
     container: null,
+    field: null,
     onComplete: null,
+    active: false,
+    arrow: null,
+    label: null,
+    progress: null,
     direction: null,
-    startPoint: null,
+    startX: 0,
+    startY: 0,
+    dragging: false,
     hits: 0,
-    required: 5,
+    required: 4,
+    directions: ["UP", "DOWN", "LEFT", "RIGHT"],
+    symbols: { UP: "↑", DOWN: "↓", LEFT: "←", RIGHT: "→" },
 
-    start(container, onComplete, difficulty = 1) {
+    start(container, onComplete) {
         this.cleanup();
         this.container = container;
         this.onComplete = onComplete;
+        this.active = true;
         this.hits = 0;
-        this.required = 5 + Math.floor(difficulty);
+        this.required = 4;
+        this.dragging = false;
+
+        container.innerHTML = `
+            <div style="position:absolute;inset:0;background:#11151e;color:white;overflow:hidden;display:flex;align-items:center;justify-content:center">
+                <div style="position:absolute;top:15px;width:100%;text-align:center;pointer-events:none">
+                    <h2 style="color:#54d6e8;letter-spacing:4px">DIRECTION</h2>
+                    <p>Swipe in the direction shown</p>
+                    <p class="direction-progress" style="margin-top:8px">CORRECT: 0 / 4</p>
+                </div>
+                <div class="direction-field" style="position:absolute;inset:0;touch-action:none"></div>
+                <div class="direction-arrow" style="position:absolute;width:150px;height:150px;display:grid;place-items:center;border:5px solid #54d6e8;border-radius:22px;color:#54d6e8;font-size:105px;pointer-events:none">↑</div>
+                <p class="direction-label" style="position:absolute;bottom:12%;font-size:18px;letter-spacing:3px;pointer-events:none">SWIPE UP</p>
+            </div>
+        `;
+
+        this.field = container.querySelector(".direction-field");
+        this.arrow = container.querySelector(".direction-arrow");
+        this.label = container.querySelector(".direction-label");
+        this.progress = container.querySelector(".direction-progress");
+
         this.nextDirection();
 
-        this.handleDown = event => {
-            this.startPoint = { x: event.clientX, y: event.clientY };
+        this.down = event => {
+            if (!this.active || this.dragging) return;
+            this.dragging = true;
+            this.startX = event.clientX;
+            this.startY = event.clientY;
         };
 
-        this.handleUp = event => {
-            if (!this.startPoint) return;
+        this.up = event => {
+            if (!this.active || !this.dragging) return;
+            this.dragging = false;
 
-            const dx = event.clientX - this.startPoint.x;
-            const dy = event.clientY - this.startPoint.y;
+            const dx = event.clientX - this.startX;
+            const dy = event.clientY - this.startY;
 
-            this.startPoint = null;
+            if (Math.hypot(dx, dy) < 45) return;
 
-            if (Math.hypot(dx, dy) < 35) return;
+            let result;
 
-            const actual = Math.abs(dx) > Math.abs(dy)
-                ? (dx > 0 ? "RIGHT" : "LEFT")
-                : (dy > 0 ? "DOWN" : "UP");
-
-            if (actual === this.direction) {
-                this.hits++;
-                if (this.hits >= this.required) {
-                    this.onComplete?.();
-                } else {
-                    this.nextDirection();
-                }
+            if (Math.abs(dx) > Math.abs(dy)) {
+                result = dx > 0 ? "RIGHT" : "LEFT";
             } else {
-                this.showMessage("WRONG DIRECTION");
+                result = dy > 0 ? "DOWN" : "UP";
+            }
+
+            if (result === this.direction) {
+                this.hits++;
+                this.progress.textContent =
+                    `CORRECT: ${this.hits} / ${this.required}`;
+
+                if (this.hits >= this.required) {
+                    this.finish(true);
+                    return;
+                }
+
+                this.nextDirection();
+            } else {
+                this.label.textContent = "WRONG WAY! TRY AGAIN";
             }
         };
 
-        container.addEventListener("pointerdown", this.handleDown);
-        window.addEventListener("pointerup", this.handleUp);
+        this.field.addEventListener("pointerdown", this.down);
+        window.addEventListener("pointerup", this.up);
     },
 
     nextDirection() {
-        const directions = ["UP", "DOWN", "LEFT", "RIGHT"];
-        this.direction = directions[Math.floor(Math.random() * 4)];
+        this.direction = this.directions[
+            Math.floor(Math.random() * this.directions.length)
+        ];
 
-        this.container.innerHTML = `
-            <div style="text-align:center;color:#54d6e8">
-                <h1 style="font-size:60px">${{
-                    UP: "↑", DOWN: "↓", LEFT: "←", RIGHT: "→"
-                }[this.direction]}</h1>
-                <p>SWIPE ${this.direction}</p>
-                <p> ${this.hits} / ${this.required}</p>
-            </div>
-        `;
+        const width = this.field.clientWidth;
+        const height = this.field.clientHeight;
+
+        const x = width * (0.2 + Math.random() * 0.6);
+        const y = height * (0.35 + Math.random() * 0.4);
+
+        this.arrow.textContent = this.symbols[this.direction];
+        this.arrow.style.left = `${x}px`;
+        this.arrow.style.top = `${y}px`;
+        this.arrow.style.transform = "translate(-50%,-50%)";
+        this.label.textContent = `SWIPE ${this.direction}`;
     },
 
-    showMessage(message) {
-        const p = this.container.querySelector("p:last-child");
-        if (p) p.textContent = message;
+    finish(success) {
+        if (!this.active) return;
+        this.active = false;
+        this.onComplete?.(success);
     },
 
     cleanup() {
-        if (this.container && this.handleDown) {
-            this.container.removeEventListener("pointerdown", this.handleDown);
+        this.active = false;
+
+        if (this.field && this.down) {
+            this.field.removeEventListener("pointerdown", this.down);
         }
-        if (this.handleUp) window.removeEventListener("pointerup", this.handleUp);
+
+        if (this.up) window.removeEventListener("pointerup", this.up);
+
         this.container = null;
-        this.startPoint = null;
+        this.field = null;
+        this.arrow = null;
     }
 };
