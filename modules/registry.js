@@ -6,7 +6,6 @@ const MinigameModules = {
     trace: Trace,
     deflect: Deflect,
     sort: Sort,
-    flick: Flick,
     circle: Circle,
     dodge: Dodge,
     catch: Catch,

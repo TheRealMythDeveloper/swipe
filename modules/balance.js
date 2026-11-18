@@ -10,7 +10,7 @@ const Balance = {
         container.innerHTML = "";
 
         const canvas = document.createElement("canvas");
-        canvas.style.cssText = "width:100%;height:100%;display:block;touch-action:none;cursor:none;";
+        canvas.style.cssText = "width:100%;height:100%;display:block;touch-action:none;cursor:default;";
         container.appendChild(canvas);
 
         const ctx = canvas.getContext("2d");

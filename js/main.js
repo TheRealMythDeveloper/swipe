@@ -75,7 +75,6 @@ const MINIGAMES = [
     { id: "stop", name: "STOP", instruction: "Stop inside the target zone." },
     { id: "deflect", name: "DEFLECT", instruction: "Redirect objects toward the goal." },
     { id: "sort", name: "SORT", instruction: "Move objects into matching zones." },
-    { id: "flick", name: "FLICK", instruction: "Flick the object toward its target." },
     { id: "circle", name: "CIRCLE", instruction: "Draw a circle within the target." },
     { id: "dodge", name: "DODGE", instruction: "Avoid the incoming objects." },
     { id: "catch", name: "CATCH", instruction: "Catch the falling objects." },
