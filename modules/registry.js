@@ -18,3 +18,7 @@ const MinigameModules = {
     follow: Follow,
     combo: Combo
 };
+document.body.insertAdjacentHTML(
+    "beforeend",
+    '<div style="position:fixed;top:10px;right:10px;z-index:99999;background:#35c978;color:#000;padding:12px">REGISTRY LOADED</div>'
+);
