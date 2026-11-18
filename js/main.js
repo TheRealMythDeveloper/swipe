@@ -1,5 +1,20 @@
 
+const gameMusic = new Audio("monument_music-fast-lane-percussion-147657.mp3");
 
+gameMusic.loop = true;
+gameMusic.volume = 0.35;
+
+function startMusic() {
+    gameMusic.currentTime = 0;
+    gameMusic.play().catch(error => {
+        console.log("Music playback blocked:", error);
+    });
+}
+
+function stopMusic() {
+    gameMusic.pause();
+    gameMusic.currentTime = 0;
+}
 const screens = {
     menu: document.getElementById("main-menu"),
     levels: document.getElementById("level-screen"),
@@ -205,7 +220,7 @@ function startCampaign() {
 
     state.mode = "CAMPAIGN";
     state.level = state.selectedLevel;
-
+startMusic();
     beginRun();
 }
 
@@ -214,7 +229,7 @@ function startEndless() {
 
     state.mode = "ENDLESS";
     state.level = 1;
-
+startMusic();
     beginRun();
 }
 
@@ -290,6 +305,7 @@ function generateLevelChallenges() {
 
 
 
+
 function loadChallenge() {
     cleanupMinigame();
     stopTimer();
@@ -309,6 +325,7 @@ function loadChallenge() {
     elements.challengeInstructions.textContent = challenge.instruction;
     elements.challengeNumber.textContent =
         `CHALLENGE ${state.challenge + 1} / ${CONFIG.challengesPerLevel}`;
+
     elements.timer.textContent = state.timeLeft;
     elements.feedback.textContent = "GET READY";
 
@@ -317,39 +334,26 @@ function loadChallenge() {
     if (!module || typeof module.start !== "function") {
         elements.minigameContent.textContent =
             `MODULE ERROR: ${challenge.name} could not be loaded.`;
+
         state.countdownActive = false;
         return;
     }
 
     state.currentModule = module;
 
-    try {
-        module.start(
-            elements.minigameContent,
-            (success = true) => {
-                if (!state.running || state.paused) return;
-                if (success) completeChallenge();
-                else failChallenge();
-            },
-            Math.min(5, Math.floor((state.level - 1) / 2) + 1)
-        );
-    } catch (error) {
-        state.running = false;
-        state.countdownActive = false;
-        elements.minigameContent.textContent =
-            `ERROR STARTING ${challenge.name}`;
-        console.error("Minigame startup error:", error);
-        return;
-    }
+    // The minigame does NOT start here.
+    // It waits until the countdown reaches GO.
+
+    elements.minigameContent.innerHTML = "";
 
     updateHUD();
-    startChallengeCountdown(token);
+
+    startChallengeCountdown(token, module, challenge);
 }
 
-function startChallengeCountdown(token) {
+
+function startChallengeCountdown(token, module, challenge) {
     const arena = elements.minigameContent;
-    const sequence = ["3", "2", "2", "1", "GO!"];
-    let index = 0;
 
     const overlay = document.createElement("div");
 
@@ -370,14 +374,46 @@ function startChallengeCountdown(token) {
     arena.style.position = "relative";
     arena.appendChild(overlay);
 
+    const sequence = ["3", "2", "2", "1", "GO!"];
+    let index = 0;
+
     const tick = () => {
-        if (token !== state.challengeToken || state.paused) return;
+        if (token !== state.challengeToken) return;
+        if (state.paused) return;
 
         if (index >= sequence.length) {
             overlay.remove();
+
             state.countdownActive = false;
             state.running = true;
+
             elements.feedback.textContent = "GO!";
+
+            try {
+                module.start(
+                    arena,
+                    success => {
+                        if (!state.running || state.paused) return;
+
+                        if (success) completeChallenge();
+                        else failChallenge();
+                    },
+                    Math.min(
+                        5,
+                        Math.floor((state.level - 1) / 2) + 1
+                    )
+                );
+            } catch (error) {
+                state.running = false;
+                state.countdownActive = false;
+
+                elements.minigameContent.textContent =
+                    `ERROR STARTING ${challenge.name}`;
+
+                console.error("Minigame startup error:", error);
+                return;
+            }
+
             startTimer();
             return;
         }
@@ -539,7 +575,7 @@ function failChallenge() {
     cleanupMinigame();
 
     elements.feedback.textContent = "FAILED";
-
+stopMusic();
     setTimeout(() => {
         showGameOver();
     }, 700);
@@ -659,7 +695,7 @@ function restartGame() {
     state.levelScore = 0;
 
     generateLevelChallenges();
-
+startMusic();
     showScreen("game");
 
     updateHUD();
