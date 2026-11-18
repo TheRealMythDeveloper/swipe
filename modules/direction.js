@@ -1,4 +1,3 @@
-
 const Direction = {
     container: null,
     field: null,

@@ -1,4 +1,3 @@
-
 const Sort = {
     container: null,
     onComplete: null,

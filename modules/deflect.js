@@ -1,4 +1,3 @@
-
 const Deflect = {
     container: null,
     field: null,

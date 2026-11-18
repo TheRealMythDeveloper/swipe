@@ -1,4 +1,3 @@
-
 const Follow = {
     container: null,
     onComplete: null,

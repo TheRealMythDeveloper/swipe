@@ -1,4 +1,3 @@
-
 const Tap = {
     interval: null,
     timeout: null,

@@ -1,4 +1,3 @@
-
 const Balance = {
     frame: null,
 

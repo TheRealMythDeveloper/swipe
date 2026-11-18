@@ -1,4 +1,3 @@
-
 const Circle = {
     frame: null,
     cleanup() {

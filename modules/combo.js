@@ -1,4 +1,3 @@
-
 const Combo = {
     timeout: null,
     cleanup() {

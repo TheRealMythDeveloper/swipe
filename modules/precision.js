@@ -1,4 +1,3 @@
-
 const Precision = {
     container: null,
     onComplete: null,
