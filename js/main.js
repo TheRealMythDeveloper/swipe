@@ -393,23 +393,27 @@ function startChallengeCountdown(token) {
 }
 
 
+
+
 function startTimer() {
     stopTimer();
 
-    state.timeLeft = CONFIG.startingTime;
-    updateTimerDisplay();
+    if (!state.running || state.paused || state.countdownActive) return;
 
     state.timerInterval = setInterval(() => {
-        if (!state.running || state.paused) return;
+        if (!state.running || state.paused || state.countdownActive) return;
 
         state.timeLeft--;
         updateTimerDisplay();
 
         if (state.timeLeft <= 0) {
+            stopTimer();
             failChallenge();
         }
     }, 1000);
 }
+
+
 
 function updateTimerDisplay() {
     const timer = elements.timer;
@@ -435,13 +439,14 @@ function updateTimerDisplay() {
 
 
 
-function stopTimer() {
 
-    if (state.timerInterval !== null) {
+function stopTimer() {
+    if (state.timerInterval) {
         clearInterval(state.timerInterval);
         state.timerInterval = null;
     }
 }
+
 
 
 
@@ -610,14 +615,26 @@ function showGameOver() {
 
 
 
-function pauseGame() {
 
-    if (!state.running) return;
+function pauseGame() {
+    if (!state.running && !state.countdownActive) return;
+    if (state.paused) return;
 
     state.paused = true;
+    stopTimer();
+
+    if (state.countdownTimeout) {
+        clearTimeout(state.countdownTimeout);
+        state.countdownTimeout = null;
+    }
+
+    if (state.currentModule && state.currentModule.pause) {
+        state.currentModule.pause();
+    }
 
     showScreen("pause");
 }
+
 
 
 function resumeGame() {
