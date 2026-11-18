@@ -443,7 +443,6 @@ function transitionToNextChallenge() {
 
 
 function completeChallenge() {
-
     if (!state.running || state.paused) return;
 
     state.completed++;
@@ -459,19 +458,18 @@ function completeChallenge() {
     elements.feedback.textContent = "COMPLETE!";
 
     state.running = false;
-
     stopTimer();
-    cleanupMinigame();
 
     setTimeout(() => {
-    state.challenge++;
+        state.challenge++;
 
-    if (state.challenge >= CONFIG.challengesPerLevel) {
-        finishLevel();
-    } else {
-        transitionToNextChallenge();
-    }
-}, 400);
+        if (state.challenge >= CONFIG.challengesPerLevel) {
+            finishLevel();
+        } else {
+            transitionToNextChallenge();
+        }
+    }, 400);
+}
 
 
 function failChallenge() {
