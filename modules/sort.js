@@ -1,119 +1,128 @@
 
-const Stop = {
+const Sort = {
     container: null,
     onComplete: null,
-    marker: null,
-    zone: null,
-    progress: null,
-    animation: null,
+    items: [],
+    selected: null,
+    placed: 0,
     active: false,
-    position: 5,
-    direction: 1,
-    speed: 0.045,
-    hits: 0,
-    required: 4,
-    zonePosition: 43,
-    lastTime: 0,
 
     start(container, onComplete, difficulty = 1) {
         this.cleanup();
 
         this.container = container;
         this.onComplete = onComplete;
-        this.hits = 0;
-        this.required = 4;
-        this.position = 5;
-        this.direction = 1;
-        this.speed = 0.045 + difficulty * 0.012;
-        this.zonePosition = 43;
-        this.lastTime = 0;
+        this.placed = 0;
+        this.selected = null;
         this.active = true;
 
+        const colors = [
+            { name: "CYAN", color: "#54d6e8" },
+            { name: "GREEN", color: "#35c978" },
+            { name: "RED", color: "#ed6262" },
+            { name: "YELLOW", color: "#e9ca57" }
+        ];
+
+        this.items = [...colors].sort(() => Math.random() - 0.5);
+
         container.innerHTML = `
-            <div style="position:relative;width:100%;height:100%;min-height:300px;background:#171a24;color:white;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:35px;overflow:hidden">
-                <h2 style="color:#54d6e8">STOP IN THE ZONE</h2>
-                <p>Click when the marker enters the highlighted area.</p>
-                <div style="position:relative;width:86%;height:48px;background:#343b4b;border-radius:5px">
-                    <div class="stop-zone" style="position:absolute;top:0;left:43%;width:12%;height:100%;background:#35c978;opacity:.55"></div>
-                    <div class="stop-marker" style="position:absolute;top:-9px;left:5%;width:8px;height:66px;background:white;border-radius:4px"></div>
-                </div>
-                <p class="stop-progress">HITS: 0 / 4</p>
-                <p class="stop-message">READY?</p>
+            <div style="width:100%;min-height:350px;background:#171a24;color:white;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:25px;padding:20px;box-sizing:border-box">
+                <h2 style="color:#54d6e8">SORT THE OBJECTS</h2>
+                <p>Select an object, then select its matching zone.</p>
+                <div class="sort-items" style="display:flex;gap:12px;flex-wrap:wrap;justify-content:center"></div>
+                <div class="sort-zones" style="display:grid;grid-template-columns:repeat(2,minmax(90px,130px));gap:12px"></div>
+                <p class="sort-progress">SORTED: 0 / 4</p>
             </div>
         `;
 
-        this.marker = container.querySelector(".stop-marker");
-        this.zone = container.querySelector(".stop-zone");
-        this.progress = container.querySelector(".stop-progress");
-        this.message = container.querySelector(".stop-message");
+        const itemArea = container.querySelector(".sort-items");
+        const zoneArea = container.querySelector(".sort-zones");
 
-        this.handlePress = () => this.attempt();
-        container.addEventListener("pointerdown", this.handlePress);
+        this.items.forEach(item => {
+            const button = document.createElement("button");
 
-        this.animation = requestAnimationFrame(time => this.animate(time));
-    },
+            button.textContent = item.name;
+            button.dataset.color = item.name;
+            button.style.cssText = `
+                width:85px;
+                height:65px;
+                border:2px solid ${item.color};
+                background:#252b38;
+                color:${item.color};
+                font-weight:bold;
+                cursor:pointer;
+                border-radius:5px;
+            `;
 
-    animate(time) {
-        if (!this.active) return;
+            button.addEventListener("click", () => {
+                if (!this.active || button.dataset.placed) return;
 
-        if (!this.lastTime) this.lastTime = time;
+                if (this.selected) {
+                    this.selected.style.outline = "none";
+                }
 
-        const delta = Math.min(time - this.lastTime, 40);
-        this.lastTime = time;
+                this.selected = button;
+                button.style.outline = "3px solid white";
+            });
 
-        this.position += this.direction * this.speed * delta;
+            itemArea.appendChild(button);
+        });
 
-        if (this.position >= 96) {
-            this.position = 96;
-            this.direction = -1;
-        }
+        colors.forEach(item => {
+            const zone = document.createElement("button");
 
-        if (this.position <= 2) {
-            this.position = 2;
-            this.direction = 1;
-        }
+            zone.textContent = item.name;
+            zone.dataset.color = item.name;
+            zone.style.cssText = `
+                min-height:75px;
+                border:2px dashed ${item.color};
+                background:#252b38;
+                color:${item.color};
+                font-weight:bold;
+                cursor:pointer;
+                border-radius:5px;
+            `;
 
-        this.marker.style.left = `${this.position}%`;
+            zone.addEventListener("click", () => {
+                if (!this.active || !this.selected) return;
 
-        this.animation = requestAnimationFrame(nextTime => this.animate(nextTime));
-    },
+                if (this.selected.dataset.color !== zone.dataset.color) {
+                    zone.textContent = "WRONG ZONE";
+                    setTimeout(() => {
+                        if (this.active) zone.textContent = item.name;
+                    }, 450);
+                    return;
+                }
 
-    attempt() {
-        if (!this.active) return;
+                this.selected.dataset.placed = "true";
+                this.selected.style.visibility = "hidden";
+                this.selected.style.outline = "none";
 
-        if (
-            this.position >= this.zonePosition &&
-            this.position <= this.zonePosition + 12
-        ) {
-            this.hits++;
-            this.progress.textContent = `HITS: ${this.hits} / ${this.required}`;
-            this.message.textContent = "NICE HIT";
+                zone.textContent = "✓ " + item.name;
+                zone.style.background = "#263c35";
+                zone.style.borderStyle = "solid";
 
-            if (this.hits >= this.required) {
-                this.active = false;
-                this.onComplete?.(true);
-                return;
-            }
+                this.selected = null;
+                this.placed++;
 
-            this.zonePosition = 8 + Math.random() * 76;
-            this.zone.style.left = `${this.zonePosition}%`;
-        } else {
-            this.message.textContent = "MISSED. TRY AGAIN";
-        }
+                container.querySelector(".sort-progress").textContent =
+                    `SORTED: ${this.placed} / 4`;
+
+                if (this.placed >= 4) {
+                    this.active = false;
+                    this.onComplete?.(true);
+                }
+            });
+
+            zoneArea.appendChild(zone);
+        });
     },
 
     cleanup() {
-        if (this.animation) cancelAnimationFrame(this.animation);
-
-        if (this.container && this.handlePress) {
-            this.container.removeEventListener("pointerdown", this.handlePress);
-        }
-
         this.active = false;
+        this.selected = null;
+        this.items = [];
+        this.placed = 0;
         this.container = null;
-        this.marker = null;
-        this.zone = null;
-        this.progress = null;
-        this.animation = null;
     }
 };
